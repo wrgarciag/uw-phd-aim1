@@ -1,0 +1,5 @@
+Starting Dynare (version 6.3).
+Calling Dynare with arguments: none
+Starting preprocessing of the model file ... 
+ERROR: us_olg_mortality.mod: line 68, cols 5-11: Symbol mu declared twice with different types! 
+Preprocessing time: 0h00m00s.

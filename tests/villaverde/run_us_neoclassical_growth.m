@@ -1,0 +1,179 @@
+% MATLAB script to run Dynare model and check steady state
+clear all;
+close all;
+clc;
+
+% 1) Add Dynare’s MATLAB folder to the path
+dynare_path = 'C:\dynare\6.3\matlab';
+addpath(dynare_path);
+
+% 2) Change to the folder containing .mod files
+modelsDir = 'C:\Users\wrgar\OneDrive - UW\04Dissertation\USPPD50x50\tests\villaverde';
+cd(modelsDir);
+
+% Clean up previous Dynare output
+system('rmdir /S /Q us_neoclassical_growth');
+
+% Run Dynare
+dynare us_neoclassical_growth.mod
+
+% After running Dynare: dynare us_neoclassical_growth.mod
+% Ensure Dynare is in your MATLAB path
+
+% Extract endogenous variables (rows: variables, columns: periods)
+c = oo_.endo_simul(strcmp(M_.endo_names, 'c'), :); % Consumption
+k = oo_.endo_simul(strcmp(M_.endo_names, 'k'), :); % Capital
+y = oo_.endo_simul(strcmp(M_.endo_names, 'y'), :); % Output
+i = oo_.endo_simul(strcmp(M_.endo_names, 'i'), :); % Investment
+
+% Extract exogenous variables (rows: periods, columns: variables)
+l = oo_.exo_simul(:, strcmp(M_.exo_names, 'l')); % Working-age ratio
+n = oo_.exo_simul(:, strcmp(M_.exo_names, 'n')); % Population growth
+g = oo_.exo_simul(:, strcmp(M_.exo_names, 'g')); % Technology growth
+
+% Time vector (1992 to 2018, 27 periods, excluding steady states)
+years = 1992:2018; % Matches simulation periods 2 to 28
+T = length(years); % T = 27
+
+% Trim endogenous variables to exclude initial and terminal steady states
+c = c(2:T+1); % Periods 2 to 28
+k = k(2:T+1);
+y = y(2:T+1);
+i = i(2:T+1);
+
+% Trim exogenous variables
+l = l(2:T+1); % Periods 2 to 28
+n = n(2:T+1);
+g = g(2:T+1);
+
+% Compute population level (N_t) from growth rates
+N = ones(T, 1); % Initialize N_1 = 1
+for t = 2:T
+    N(t) = N(t-1) * (1 + n(t-1));
+end
+
+% Compute output per working-age adult
+y_per_l = y ./ l.';
+
+% Plot 1: GDP per Working-Age Adult vs. GDP per Capita
+figure;
+plot(years, y_per_l, 'b-', 'LineWidth', 2, 'DisplayName', 'GDP per Working-Age Adult (y_t/l_t)');
+hold on;
+plot(years, y, 'r--', 'LineWidth', 2, 'DisplayName', 'GDP per Capita (y_t)');
+xlabel('Year');
+ylabel('Normalized Value');
+title('GDP per Working-Age Adult vs. GDP per Capita');
+legend('show');
+grid on;
+
+% Plot 2: Time Paths of Key Variables
+figure;
+subplot(2, 2, 1);
+plot(years, c, 'b-', 'LineWidth', 2);
+xlabel('Year');
+ylabel('Consumption (c_t)');
+title('Normalized Consumption');
+grid on;
+
+subplot(2, 2, 2);
+plot(years, k, 'r-', 'LineWidth', 2);
+xlabel('Year');
+ylabel('Capital (k_t)');
+title('Normalized Capital');
+grid on;
+
+subplot(2, 2, 3);
+plot(years, y, 'g-', 'LineWidth', 2);
+xlabel('Year');
+ylabel('Output (y_t)');
+title('Normalized Output');
+grid on;
+
+subplot(2, 2, 4);
+plot(years, i, 'm-', 'LineWidth', 2);
+xlabel('Year');
+ylabel('Investment (i_t)');
+title('Normalized Investment');
+grid on;
+
+sgtitle('Time Paths of Key Variables');
+
+% Plot 3: Capital/Output Ratio
+figure;
+plot(years, k ./ y, 'b-', 'LineWidth', 2);
+xlabel('Year');
+ylabel('Capital/Output Ratio (k_t/y_t)');
+title('Capital/Output Ratio');
+grid on;
+hold on;
+plot(years, 3.34 * ones(size(years)), 'r--', 'DisplayName', 'Target k/y = 3.34');
+legend('show');
+
+% Plot 4: Consumption and Investment Shares
+figure;
+plot(years, c ./ y, 'b-', 'LineWidth', 2, 'DisplayName', 'Consumption Share (c_t/y_t)');
+hold on;
+plot(years, i ./ y, 'r--', 'LineWidth', 2, 'DisplayName', 'Investment Share (i_t/y_t)');
+xlabel('Year');
+ylabel('Share of Output');
+title('Consumption and Investment Shares');
+legend('show');
+grid on;
+
+% Plot 5: Growth Rates
+y_growth = (y(2:end) ./ y(1:end-1) - 1) * 100; % Annual % growth
+y_per_l_growth = (y_per_l(2:end) ./ y_per_l(1:end-1) - 1) * 100;
+c_growth = (c(2:end) ./ c(1:end-1) - 1) * 100;
+
+figure;
+plot(years(2:end), y_per_l_growth, 'b-', 'LineWidth', 2, 'DisplayName', 'GDP per Working-Age Adult Growth');
+hold on;
+plot(years(2:end), y_growth, 'r--', 'LineWidth', 2, 'DisplayName', 'GDP per Capita Growth');
+plot(years(2:end), c_growth, 'g:', 'LineWidth', 2, 'DisplayName', 'Consumption Growth');
+xlabel('Year');
+ylabel('Annual Growth Rate (%)');
+title('Growth Rates of Output and Consumption');
+legend('show');
+grid on;
+plot(years(2:end), 1.65 * ones(size(years(2:end))), 'k--', 'DisplayName', 'Target Growth = 1.65%');
+
+% Plot 6: Exogenous Variables
+figure;
+subplot(2, 1, 1);
+plot(years, l, 'b-', 'LineWidth', 2);
+xlabel('Year');
+ylabel('Working-Age Ratio (l_t)');
+title('Working-Age Population Ratio');
+grid on;
+
+subplot(2, 1, 2);
+plot(years, n * 100, 'r-', 'LineWidth', 2); % Convert to %
+xlabel('Year');
+ylabel('Population Growth Rate (%)(n_t)');
+title('Population Growth Rate');
+grid on;
+
+sgtitle('Exogenous Demographic Variables');
+
+% Plot 7: Output Decomposition (in logs)
+log_y_total = log(y) + log(N) + log(l); % Approximate total output
+figure;
+plot(years, log(y), 'b-', 'LineWidth', 2, 'DisplayName', 'log(y_t)');
+hold on;
+plot(years, log(l), 'r--', 'LineWidth', 2, 'DisplayName', 'log(l_t)');
+plot(years, log(N), 'g:', 'LineWidth', 2, 'DisplayName', 'log(N_t)');
+plot(years, log(y_per_l), 'm-.', 'LineWidth', 2, 'DisplayName', 'log(y_t/l_t)');
+xlabel('Year');
+ylabel('Log Value');
+title('Output Decomposition (Log Scale)');
+legend('show');
+grid on;
+
+% Save figures (optional)
+saveas(figure(1), 'gdp_comparison.png');
+saveas(figure(2), 'key_variables.png');
+saveas(figure(3), 'capital_output_ratio.png');
+saveas(figure(4), 'shares.png');
+saveas(figure(5), 'growth_rates.png');
+saveas(figure(6), 'exogenous_variables.png');
+saveas(figure(7), 'output_decomposition.png');

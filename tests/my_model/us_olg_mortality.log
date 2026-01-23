@@ -1,0 +1,5 @@
+Starting Dynare (version 6.3).
+Calling Dynare with arguments: none
+Starting preprocessing of the model file ... 
+ERROR: us_olg_mortality.mod: line 131, cols 20-22: syntax error, unexpected NAME 
+Preprocessing time: 0h00m00s.

@@ -1,0 +1,5 @@
+Starting Dynare (version 6.3).
+Calling Dynare with arguments: none
+Starting preprocessing of the model file ... 
+ERROR: health_model.mod: line 7, col 7: syntax error, unexpected ';' 
+Preprocessing time: 0h00m00s.

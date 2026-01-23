@@ -1,0 +1,77 @@
+// OLG Model with Endogenous Mortality Reduction (Dynare Code)
+// Calibration based on U.S. economy parameters
+
+var c l k h y w r tau hc tr pi;
+predetermined_variables k h;
+
+parameters beta delta alpha theta gamma phi psi rho;
+
+// === Calibration (U.S.) ===
+beta    = 0.98;       // subjective discount factor (annual)
+delta   = 0.06;       // depreciation rate of capital
+alpha   = 0.36;       // capital share in production
+theta   = 2.0;        // relative risk aversion (CRRA utility)
+gamma   = 0.4;        // leisure preference
+phi     = 0.3;        // health capital elasticity in productivity
+psi     = 0.1;        // elasticity of survival probability w.r.t health
+rho     = 0.25;       // public spending share (healthcare)
+
+// === Model Equations ===
+model;
+// 1. Utility maximization (Euler equation)
+c^(-theta) = beta*pi*(1+r(+1)-delta)*c(+1)^(-theta);
+
+// 2. Leisure-consumption tradeoff
+w*(1-tau)*(h^(phi)) = gamma*c/(1-l);
+
+// 3. Aggregate Production function
+y = k^alpha*(h*(1-l))^(1-alpha);
+
+// 4. Wage definition
+w = (1-alpha)*y/(h*(1-l));
+
+// 5. Interest rate definition
+r = alpha*y/k;
+
+// 6. Capital accumulation
+k(+1) = y - c - hc - tr + (1-delta)*k;
+
+// 7. Health capital accumulation
+h(+1) = psi*hc + (1-psi)*h;
+
+// 8. Survival probability (endogenous mortality)
+pi = 0.95 + psi*log(h);
+
+// 9. Government budget constraint
+hc + tr = tau*(w*h*(1-l) + r*k);
+
+// 10. Tax rate (balanced budget constraint)
+tau = rho;
+end;
+
+// === Initial steady-state guesses ===
+initval;
+k = 5;
+h = 1;
+c = 1;
+l = 0.3;
+y = 2;
+w = 1;
+r = 0.04;
+tau = rho;
+hc = tau*y/2;
+tr = tau*y/2;
+pi = 0.95;
+end;
+
+steady;
+check;
+
+// === Simulate mortality reduction scenario ===
+shocks;
+var psi;
+periods 1:50;
+values 0.15; // Mortality reduction policy increasing health effectiveness
+end;
+
+stoch_simul(order=1, periods=100, irf=40) c l y k h w r pi tau hc tr;
