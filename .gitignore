@@ -3,6 +3,8 @@
 *.pdf
 
 library/**/*.*
+!library/**/*.md
+
 data/raw/**/*.*
 !data/raw/**/*.md
 
