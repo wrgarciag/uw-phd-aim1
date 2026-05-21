@@ -135,9 +135,9 @@ saveRDS(dt_mort, paste0(wd_data, "state_age_sex_mortality_gbd.rds"))
 rm(dt_mort_all,dt_mort)
 
 
-# State level - all causes GBD 2023----
+# Infectious/Childhood cluster diseases GBD 2023----
 
-# Permanent link to GBD 2023 data for: 
+# Permanent link to US States level GBD 2023 data for I-8 cluster: 
 # Neonatal disorders
 # Lower respiratory infections
 # Diarrheal diseases
@@ -151,3 +151,56 @@ rm(dt_mort_all,dt_mort)
 # Maternal disorders
 
 #https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/49a156c7364d1b9bec523c4eb45f8e05
+
+# NCD 7 - CVD-DM-EPOC cluster diseases GBD 2023----
+
+# Permanent link to US States level GBD 2023 data for NCD 7:
+
+# Ischemic heart disease
+# Stroke
+# Diabetes mellitus
+# Chronic kidney disease due to diabetes 
+# Chronic obstructive pulmonary disease
+# Asthma
+
+# https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/8587d602cbf46f6af6b14c0fc2f15d28
+
+# Injuries, violence and substance use cluster diseases GBD 2023----
+
+# Permanent link to US States level GBD 2023 data for Injuries cluster:
+
+# Road injuries
+# Self-harm
+# Drug use disorders
+# Interpersonal violence
+# Mental disorders; substance use disorders
+# Alzheimer's disease and other dementias; Parkinson disease; epilepsy; other neurological disorders
+
+#https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/3e3a484f8d7e58b2bd81592448d608ef
+
+
+# NCDs strongly linked to infections GBD 2023----
+
+# Permanent link to US States level GBD 2023 data for NCDs linked to infections cluster:
+
+# Cervical cancer
+# Cirrhosis due to hepatitis B
+# Cirrhosis due to hepatitis C
+# Liver cancer secondary to hepatitis B
+# Liver cancer secondary to hepatitis C
+# Rheumatic heart disease
+# Stomach cancer
+
+#https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/ad6cbe928f98cac4cdcad44a3f01b69a
+
+# NCDs strongly linked to tobacco GBD 2023----
+
+# Permanent link to US States level GBD 2023 data for NCDs linked to tobacco cluster:
+
+# Larynx cancer
+# Mouth and oropharynx cancer
+# Trachea, bronchus, and lung cancer
+
+
+# https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/4ed7ea6ee1be8e328de1efdcf4d219e1
+
