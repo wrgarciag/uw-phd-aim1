@@ -1,7 +1,14 @@
 
-# IHME GBD data
+# ============================================================
+# 02_load_inputs.R
+# State-age-sex only, with global best-country benchmark option
+# ============================================================
 
-# State level - all causes GBD 2023----
+# .............................................................
+# 1. IHME GBD mortality data----
+# .............................................................
+
+## State level - all causes GBD 2023----
 
 # Permanent link to GBD 2023 data for all causes
 #https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/80190239c3cb9d535ef29f269e2f9a05
@@ -135,7 +142,7 @@ saveRDS(dt_mort, paste0(wd_data, "state_age_sex_mortality_gbd.rds"))
 rm(dt_mort_all,dt_mort)
 
 
-# Infectious/Childhood cluster diseases GBD 2023----
+## Infectious/Childhood cluster diseases GBD 2023----
 
 # Permanent link to US States level GBD 2023 data for I-8 cluster: 
 # Neonatal disorders
@@ -152,7 +159,14 @@ rm(dt_mort_all,dt_mort)
 
 #https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/49a156c7364d1b9bec523c4eb45f8e05
 
-# NCD 7 - CVD-DM-EPOC cluster diseases GBD 2023----
+# List all CSV files
+#files <- list.files(paste0(wd_raw,"gbd/mortality/infectious_childhood/"), pattern = "\\.csv$", full.names = TRUE)
+
+# Read and combine using rbindlist
+#dt_infectious <- rbindlist(lapply(files, fread), use.names = TRUE, fill = TRUE)
+
+
+## NCD 7 - CVD-DM-EPOC cluster diseases GBD 2023----
 
 # Permanent link to US States level GBD 2023 data for NCD 7:
 
@@ -165,7 +179,13 @@ rm(dt_mort_all,dt_mort)
 
 # https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/8587d602cbf46f6af6b14c0fc2f15d28
 
-# Injuries, violence and substance use cluster diseases GBD 2023----
+#files <- list.files(paste0(wd_raw,"gbd/mortality/ncd7_cvd-dm/"), pattern = "\\.csv$", full.names = TRUE)
+
+# Read and combine using rbindlist
+#dt_ncd_cvd <- rbindlist(lapply(files, fread), use.names = TRUE, fill = TRUE)
+
+
+## Injuries, violence and substance use cluster diseases GBD 2023----
 
 # Permanent link to US States level GBD 2023 data for Injuries cluster:
 
@@ -178,8 +198,13 @@ rm(dt_mort_all,dt_mort)
 
 #https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/3e3a484f8d7e58b2bd81592448d608ef
 
+#files <- list.files(paste0(wd_raw,"gbd/mortality/injuries_disorders/"), pattern = "\\.csv$", full.names = TRUE)
 
-# NCDs strongly linked to infections GBD 2023----
+# Read and combine using rbindlist
+#dt_injuries <- rbindlist(lapply(files, fread), use.names = TRUE, fill = TRUE)
+
+
+## NCDs strongly linked to infections GBD 2023----
 
 # Permanent link to US States level GBD 2023 data for NCDs linked to infections cluster:
 
@@ -193,7 +218,13 @@ rm(dt_mort_all,dt_mort)
 
 #https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/ad6cbe928f98cac4cdcad44a3f01b69a
 
-# NCDs strongly linked to tobacco GBD 2023----
+#files <- list.files(paste0(wd_raw,"gbd/mortality/ncd_infectious/"), pattern = "\\.csv$", full.names = TRUE)
+
+# Read and combine using rbindlist
+#dt_ncd_infectious <- rbindlist(lapply(files, fread), use.names = TRUE, fill = TRUE)
+
+
+## NCDs strongly linked to tobacco GBD 2023----
 
 # Permanent link to US States level GBD 2023 data for NCDs linked to tobacco cluster:
 
@@ -203,4 +234,67 @@ rm(dt_mort_all,dt_mort)
 
 
 # https://collab2023.healthdata.org/gbd-results?params=gbd-api-2023-permalink/4ed7ea6ee1be8e328de1efdcf4d219e1
+
+
+# .............................................................
+# 2. bind all GBD cause mortality folders----
+# .............................................................
+
+
+read_gbd_folder <- function(path, cluster_name) {
+  
+  files <- list.files(
+    path,
+    pattern = "\\.csv$",
+    full.names = TRUE
+  )
+  
+  stopifnot(length(files) > 0)
+  
+  dt_list <- lapply(files, function(f) {
+    x <- fread(f)
+    x[, source_file := basename(f)]
+    x[, cluster := cluster_name]
+    x
+  })
+  
+  rbindlist(dt_list, use.names = TRUE, fill = TRUE)
+}
+
+gbd_dirs <- list(
+  infectious_childhood = paste0(wd_raw, "gbd/mortality/infectious_childhood/"),
+  ncd7_cvd_dm          = paste0(wd_raw, "gbd/mortality/ncd7_cvd-dm/"),
+  injuries_disorders   = paste0(wd_raw, "gbd/mortality/injuries_disorders/"),
+  ncd_infectious       = paste0(wd_raw, "gbd/mortality/ncd_infectious/"),
+  ncd_tobacco          = paste0(wd_raw, "gbd/mortality/ncd_tobacco/")
+)
+
+dt_cause_mort <- rbindlist(
+  Map(read_gbd_folder, gbd_dirs, names(gbd_dirs)),
+  use.names = TRUE,
+  fill = TRUE
+)
+
+# .............................................................
+# 3. state_cause_specific_mortality data----
+# .............................................................
+
+# Load cases classification to group causes
+# File/ columns structure is the same as all causes
+
+dt_cause_mapping <- read_excel(
+  path       = paste0(wd_data, "Karlsson2025_GBD_US_mapping_final.xlsx"),
+  sheet      = "User_GBD_causes",
+  col_names  = TRUE
+) %>% 
+  as.data.table()
+
+# Merge cause-specific mortality with mapping to get cause groups
+dt_cause_mort <- merge(dt_cause_mort, dt_cause_mapping[, .(GBD_cause_used, Classification)], 
+                       by.x = "cause_name", by.y = "GBD_cause_used", all.x = TRUE)
+
+table(dt_cause_mort$Classification,useNA = "ifany")  # check mapping
+
+# Rename Classification as priority condition
+setnames(dt_cause_mort, "Classification", "cause_group")
 
