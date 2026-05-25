@@ -99,6 +99,7 @@ stopifnot(!anyNA(dt_mort$mort_rate))
 stopifnot(dt_mort[, .N, .(state, year, sex, age_group)][N > 1, .N] == 0L)
 
 saveRDS(dt_mort, paste0(wd_data, "state_age_sex_mortality_gbd.rds"))
+
 rm(dt_mort)
 
 
@@ -322,6 +323,8 @@ dt_ref_b3 <- merge(dt_state_cause, dt_best3_ids,
 
 rm(dt_full, dt_state_ac, dt_ppd, dt_best3_ids)
 
+# Pending check: aggregate all cause deaths are above the gbd data
+#dt_check <- dt_state_cause[state=="Washington" & year>=2019,list(deaths=sum(deaths)),by=list(state,year)]
 
 # ── B10. Save outputs ────────────────────────────────────────
 

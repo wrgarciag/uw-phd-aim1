@@ -1,0 +1,20 @@
+Please update the CLAUDE.md file for this project. Do the following:
+
+1. Read the current contents of CLAUDE.md (if it exists).
+2. Explore the project structure to understand:
+   - What the project does
+   - Key directories and their purpose
+   - Tech stack and dependencies (check package.json, requirements.txt, etc.)
+   - How to build, run, and test the project
+   - Any relevant scripts or commands
+3. Rewrite or update CLAUDE.md to accurately reflect the current state of the project. Include:
+   - Project overview (1–2 sentences)
+   - Tech stack
+   - Project structure (key directories/files and what they contain)
+   - How to install dependencies
+   - How to run the project locally
+   - How to run tests
+   - Any important conventions, patterns, or constraints Claude should know when working in this codebase
+   - Any known gotchas or things to avoid
+
+Keep the tone concise and direct — this file is read by Claude on every session, so optimize for clarity and usefulness, not length.
