@@ -1,63 +1,86 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-PhD dissertation research on whether the United States can halve premature mortality (probability of dying before age 70, denoted _{70}q_{0}) by 2050. Analysis is state-level, covering 1990–2050, with county-level work where feasible.
-
-**Three aims:**
-- **Aim 1a:** Construct state-level period life tables (1990–2019), estimate _{70}q_{0}, forecast to 2050 (Lee–Carter, APC, Bayesian hierarchical, trend-dampening)
-- **Aim 1b:** Decompose mortality trends by 15 major causes (Arriaga, Pollard, cause-deleted life tables)
-- **Aim 1c:** Identify empirically attainable improvement envelopes; compare required vs. observed annualized decline rates
+PhD dissertation (Aim 1) analyzing whether the US can halve premature mortality (probability of dying before age 70, _{70}q_0) by 2050. State-level analysis of 51 jurisdictions (50 states + DC), 1990–2023, with cause-specific decomposition using Karlsson (2025) priority conditions.
 
 ## Tech Stack
 
 - **Language:** R (RStudio project: `uw-phd-dissertation1.Rproj`)
-- **Key packages:** `data.table`, `ggplot2`, plus demographic modeling packages
-- **Version control:** Git with Git LFS (large data files)
-- **IDE settings:** UTF-8 encoding, 2-space indentation
+- **Core packages:** `data.table` (primary data manipulation), `ggplot2`, `readxl`, `parallel`/`doParallel`/`foreach`
+- **Style:** Pure `data.table` syntax in pipeline scripts (no dplyr/pipes in `02_load_inputs.R` onward)
+- **IDE:** UTF-8 encoding, 2-space indentation
 
 ## Running Code
 
-No build system. Run R scripts directly:
+No build system. Scripts run sequentially via the orchestrator:
 
-```bash
-# Run a single script
-Rscript code/your_script.R
+```r
+# Run the full pipeline
+Rscript code/00_main.R
 
-# Or open RStudio and source interactively
+# Or source individual scripts in RStudio (they depend on 00_main.R's environment)
 ```
+
+`00_main.R` sets working directories and sources scripts in order. It hardcodes `wd` to a local path — update this if running on a different machine.
+
+## Pipeline Structure
+
+| Script | Purpose | Outputs |
+|--------|---------|---------|
+| `00_main.R` | Orchestrator: sets paths, loads libraries, sources all scripts | — |
+| `01_utils.R` | Helper functions (e.g., `create_age_groups()`) | — |
+| `02_load_inputs.R` | Reads GBD 2023 CSVs + Karlsson cause mapping, builds cause-grouped mortality tables | `data/processed/*.rds` |
+| `03_ppd_estimation_trends_state.R` | Computes PPD (70q0) per state/year/sex, AARI, 50-by-50 progress tracking | `output/ppd_*.csv` |
+| `04_ppd_decomposition_state_cause.R` | Stepwise + Horiuchi decomposition of PPD gap vs. reference populations | `output/decomp_*.csv`, `output/priority_conditions_by_state.csv` |
+| `05_ppd_estimation_subgroups_state.R` | Placeholder for subgroup analysis (not yet implemented) |
 
 ## Repository Layout
 
 ```
-code/        # R analysis scripts
+code/              R analysis scripts (numbered pipeline)
 data/
-  raw/       # Source data (git-ignored except .md); GBD 2023 archives, CDC WONDER
-  interim/   # Intermediate outputs from processing steps
-  processed/ # Final analysis-ready datasets
-docs/        # Documentation
-output/      # Figures, tables, results
-paper/       # Dissertation writing
-tests/       # Test scripts
+  raw/gbd/         GBD 2023 CSVs organized by cause group (git-ignored)
+  processed/       .rds files produced by 02_load_inputs.R
+  interim/         (reserved for intermediate outputs)
+output/            Final CSVs: PPD estimates, AARI, decomposition results
+docs/              References (references.bib), prompts
+paper/             Dissertation writing (placeholder)
+tests/             (placeholder)
+library/           Reference PDFs (git-ignored except .md)
 ```
 
-## Data Sources
+## Key Data Files
 
-- **CDC WONDER** — US mortality microdata
-- **GBD 2023** — Global Burden of Disease (zip archives in `data/raw/GBD/`)
-- **US Census** — Population denominators
-- **ICD-coded** cause-of-death files (requires harmonization across ICD-9/ICD-10 transitions)
+**Inputs (git-ignored raw):**
+- `data/raw/gbd/mortality/allcause-state/` — all-cause state mortality
+- `data/raw/gbd/mortality/{infectious_childhood,ncd7_cvd-dm,injuries_disorders,ncd_infectious,ncd_tobacco}/` — cause-specific folders
 
-## Key Methodological Concepts
+**Processed (tracked):**
+- `data/processed/Karlsson2025_GBD_US_mapping_final.xlsx` — cause-to-priority-condition crosswalk
+- `data/processed/mx_state_cause.rds` — state × age × sex × cause_group rates
+- `data/processed/mx_ref_western_europe.rds` — Western Europe reference rates
+- `data/processed/mx_ref_local_best3.rds` — 3 lowest-PPD US states reference
 
-- Core outcome: _{70}q_{0} = 1 − ∏(1 − _{5}q_{x}), estimated from period life tables
-- Annualized rate of reduction: r = (ln(q0_t2) − ln(q0_t1)) / (t2 − t1)
-- Age-standardization and sex-stratification throughout
-- Reproducible workflow: scripts in `code/` should read from `data/` and write to `data/interim/`, `data/processed/`, or `output/`
+## Methodological Notes
+
+- **PPD formula:** Abridged life table with unequal age intervals. `qx = n * mx / (1 + (n - ax) * mx)` where n = interval width, ax = 0.1 for infants, n/2 otherwise. PPD = 1 − ∏(1 − qx) over ages 0–69.
+- **AARI:** Average annual rate of improvement = `(q_start / q_end)^(1/n) - 1`
+- **Decomposition:** Two methods (stepwise replacement, Horiuchi continuous-change) comparing each state to Western Europe and best-3 US states
+- **Cause mapping:** Karlsson (2025) priority conditions framework; unmapped causes → "Other" residual category
+- **Rate vector layout:** Cause-within-age ordering: `[age0_c1, age0_c2, ..., age1_c1, ...]`
+
+## Conventions
+
+- All scripts assume `00_main.R` has been sourced first (sets `wd`, `wd_data`, `wd_outp`, `wd_raw`, loads libraries)
+- Scripts use `stopifnot()` assertions for data integrity checks
+- Sex is always stratified (never "Both")
+- Age cutoff for PPD is 70 (ages 0–69 inclusive)
+- Stroke subtypes (Ischemic stroke, Intracerebral hemorrhage) used instead of aggregate when available
 
 ## Git Notes
 
-- Raw data files are git-ignored (`data/raw/**/*.*` except `.md`); use Git LFS for any large files that must be tracked
-- Generated HTML and PDF outputs are also git-ignored
+- Raw data git-ignored (`data/raw/**/*.*` except `.md`); `.rds` processed files are tracked
+- Library PDFs git-ignored except `.md` files
+- HTML/PDF outputs git-ignored
+- No Git LFS currently configured
