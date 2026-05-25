@@ -157,9 +157,9 @@ dt_progress[, implied_ppd_2050 :=
 dt_progress[, implied_reduction_2050 :=
               1 - implied_ppd_2050 / ppd_baseline]
 
-fwrite(dt_ppd,      paste0(wd_outp, "ppd_state_year_sex.csv"))
-fwrite(dt_aari,     paste0(wd_outp, "ppd_aari_state_sex.csv"))
-fwrite(dt_progress, paste0(wd_outp, "ppd_50by50_progress_state_sex.csv"))
+fwrite(dt_ppd,      paste0(wd_outp, "model/", "ppd_state_year_sex.csv"))
+fwrite(dt_aari,     paste0(wd_outp, "model/", "ppd_aari_state_sex.csv"))
+fwrite(dt_progress, paste0(wd_outp, "model/", "ppd_50by50_progress_state_sex.csv"))
 
 ## Deprecated
 
