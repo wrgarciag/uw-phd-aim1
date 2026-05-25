@@ -387,10 +387,10 @@ print(dt_priority[state == example_state & sex == "Male" &
 # 11. Save outputs
 # ══════════════════════════════════════════════════════════════
 
-fwrite(dt_stepwise, paste0(wd_outp, "decomp_state_cause_stepwise.csv"))
-fwrite(dt_horiuchi, paste0(wd_outp, "decomp_state_cause_horiuchi.csv"))
-fwrite(dt_combined, paste0(wd_outp, "decomp_state_cause_combined.csv"))
-fwrite(dt_priority, paste0(wd_outp, "priority_conditions_by_state.csv"))
+fwrite(dt_stepwise, paste0(wd_outp, "model/" ,"decomp_state_cause_stepwise.csv"))
+fwrite(dt_horiuchi, paste0(wd_outp, "model/" ,"decomp_state_cause_horiuchi.csv"))
+fwrite(dt_combined, paste0(wd_outp, "model/" ,"decomp_state_cause_combined.csv"))
+fwrite(dt_priority, paste0(wd_outp, "model/" ,"priority_conditions_by_state.csv"))
 
 cat("\nOutputs saved to: ", wd_outp, "\n")
 
