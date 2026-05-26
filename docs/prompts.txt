@@ -18,3 +18,275 @@ Please update the CLAUDE.md file for this project. Do the following:
    - Any known gotchas or things to avoid
 
 Keep the tone concise and direct — this file is read by Claude on every session, so optimize for clarity and usefulness, not length.
+
+#############################333
+You are working in my dissertation Aim 1 project repository.
+
+Goal:
+Create a new R Markdown report that produces a reproducible HTML report documenting the full workflow for estimating the probability of dying before age 70 (PPD70) at the U.S. state level from 1990–2019 and forecasting trajectories through 2050 using demographic modeling.
+
+Deliverable:
+Create a new file named:
+
+docs/report.Rmd
+
+The report should render to HTML and save all report outputs in:
+
+output/report/
+
+Do not modify any existing analysis scripts. If additional calculations, summaries, tables, or figures are needed for the report, include them inside report.Rmd only.
+
+Main purpose of the report:
+This report is intended to communicate the detailed process and calculations for dissertation Aim 1. It should be written as a technical but readable reproducible report that anticipates what dissertation committee members, reviewers, or collaborators would need to understand and evaluate the analysis.
+
+Before writing the report:
+1. Review the full project structure.
+2. Identify the relevant scripts, data inputs, intermediate outputs, and final outputs.
+3. Pay particular attention to the workflow from:
+   - 02 load input
+   - through 04 PPD decomposition
+4. Infer the modeling pipeline from the existing code and outputs.
+5. Do not assume undocumented details if they are not visible in the code. Instead, clearly label assumptions or items requiring confirmation.
+
+The report should include, at minimum, the following sections:
+
+1. Title page / header
+   - Working title: “Estimating and Forecasting the Probability of Dying Before Age 70 at the U.S. State Level, 1990–2050”
+   - Author: William Garcia
+   - Output: HTML
+
+2. Executive summary
+   - Briefly summarize the purpose of the analysis.
+   - Describe the core outcome: probability of dying before age 70.
+   - Summarize the historical period, forecast period, geography, and main outputs.
+   - Include a short interpretation of how this analysis supports dissertation Aim 1.
+
+3. Background and motivation
+   - Explain why premature mortality before age 70 is a relevant metric.
+   - Explain why state-level estimation matters for U.S. health policy and equity.
+   - Explain how the analysis relates to 50-by-50 / premature mortality reduction goals, if supported by the existing project code or documents.
+   - Keep this section grounded in the actual project context.
+
+4. Objectives
+   Include clear objectives such as:
+   - Estimate the probability of dying before age 70 by state, sex, year, and cause/cause group where available.
+   - Describe historical trends from 1990 to 2019.
+   - Forecast state-level PPD70 trajectories through 2050.
+   - Decompose changes in PPD70 into interpretable demographic and/or cause-specific components based on the existing decomposition code.
+   - Generate tables and figures that communicate inputs, intermediate calculations, results, validation checks, and supplemental analyses.
+
+5. Project structure and workflow
+   - Describe the repository structure.
+   - Include a table listing key folders, scripts, inputs, intermediate files, and outputs.
+   - Explain the order in which the workflow runs.
+   - Specifically document the scripts from 02 load input through 04 PPD decomposition.
+   - Include a workflow diagram if feasible using DiagrammeR, Mermaid, or a simple table-based flow.
+
+6. Data description
+   Review the code and document all relevant data sources used in the workflow, including:
+   - Mortality data
+   - Population data
+   - Life table data, if used
+   - Cause-of-death data, if used
+   - State identifiers and geographic crosswalks
+   - Sex, age, year, and cause variables
+   - Forecast inputs or assumptions
+   - Any files produced by earlier scripts and consumed by later scripts
+
+   Include tables showing:
+   - Input datasets and file paths
+   - Key variables
+   - Years covered
+   - States covered
+   - Age groups
+   - Sex categories
+   - Causes or cause groups
+   - Number of rows and missingness summaries
+
+7. Outcome definition
+   Define the probability of dying before age 70.
+
+   Include the relevant equations used by the code. At minimum, include the standard life-table relationship if consistent with the implementation:
+
+   - Age-specific mortality rate:
+     m_{x,t,s} = D_{x,t,s} / N_{x,t,s}
+
+   - Conversion from mortality rates to death probabilities, if used:
+     q_{x,t,s} = function(m_{x,t,s}, n)
+
+   - Survival to age 70:
+     S_{70,t,s} = product over ages x < 70 of (1 - q_{x,t,s})
+
+   - Probability of dying before age 70:
+     PPD70_{t,s} = 1 - S_{70,t,s}
+
+   Adapt the notation to match the actual code:
+   - state
+   - sex
+   - year
+   - age or age group
+   - cause if cause-specific decomposition is performed
+
+   If the code uses another formula, document the exact implementation used in the scripts instead.
+
+8. Methods of estimation
+   Document the estimation strategy based on the code:
+   - How mortality rates are calculated.
+   - How age groups are handled.
+   - How state-level estimates are produced.
+   - How sex-specific estimates are produced.
+   - How cause-specific or all-cause estimates are handled.
+   - How PPD70 is calculated.
+   - Any smoothing, interpolation, extrapolation, standardization, or aggregation.
+   - How uncertainty is handled, if applicable.
+   - How validation checks are performed.
+
+9. Forecasting through 2050
+   Describe the demographic forecasting approach used in the code:
+   - Baseline years
+   - Forecast horizon
+   - Population projections
+   - Mortality trend assumptions
+   - Cause-specific trajectories if applicable
+   - Scenario structure if applicable
+   - How forecasts are generated from historical estimates
+   - Any extrapolation or trend models
+
+   Include equations for the forecasting model if identifiable from the code. For example:
+   - log-linear mortality trend models
+   - annualized rates of change
+   - extrapolation of age-specific mortality rates
+   - decomposition-based projections
+   - demographic accounting identities
+
+   Do not invent methods. If the exact forecast model is unclear, document what the code does and flag what needs confirmation.
+
+10. PPD decomposition
+   Carefully document the decomposition workflow in the 04 PPD decomposition script.
+   Include:
+   - What quantity is decomposed.
+   - Whether decomposition is by age, cause, sex, state, period, or scenario.
+   - Baseline and comparison years.
+   - Mathematical intuition.
+   - Formal equations where possible.
+   - Interpretation of each component.
+   - How the decomposition results should be read.
+
+   Include tables and figures showing:
+   - National or overall decomposition summary
+   - State-level decomposition results
+   - Largest contributors to PPD70 changes
+   - Cause- or age-specific contributions if available
+   - Supplemental decomposition outputs
+
+11. Results
+   Produce polished tables and figures from the existing code outputs.
+
+   Include at least the following, if data are available:
+   - Historical PPD70 by state, 1990–2019.
+   - Forecast PPD70 by state, 2020–2050.
+   - State rankings in selected years: 1990, 2019, 2030, 2040, 2050.
+   - Absolute and relative change in PPD70 by state.
+   - Sex-specific results.
+   - Maps of PPD70 by state for selected years, if state shapefiles or compatible map tools are available.
+   - Line plots of PPD70 trajectories by state.
+   - Faceted plots by sex.
+   - Heatmaps of state-year PPD70.
+   - Decomposition bar plots.
+   - Tables of states with largest improvement and worsening.
+   - Supplemental tables of input mortality rates, populations, and intermediate calculations.
+
+12. Validation and diagnostic checks
+   Include a discussion-validation section covering:
+   - Internal consistency checks.
+   - Missingness checks.
+   - State-year completeness.
+   - Whether PPD70 values are plausible and bounded between 0 and 1.
+   - Comparison of derived deaths, mortality rates, or PPD70 against source data where possible.
+   - Checks for implausible jumps over time.
+   - Sex-specific consistency.
+   - Cause-sum consistency if cause-specific estimates are used.
+   - Forecast plausibility checks through 2050.
+   - Any known limitations in the data or code.
+
+   Include validation tables/figures such as:
+   - Missingness by dataset.
+   - Range of PPD70 by year.
+   - Outlier state-years.
+   - Comparison of observed vs fitted/forecast values.
+   - Historical-to-forecast transition checks around 2019/2020.
+
+13. Discussion
+   - Summarize the main empirical patterns.
+   - Discuss state-level heterogeneity.
+   - Discuss sex differences.
+   - Discuss what the decomposition suggests.
+   - Discuss implications for dissertation Aim 1.
+   - Discuss limitations.
+   - Discuss next analytical steps.
+
+14. Supplemental analysis
+   Include supplemental sections or appendices with:
+   - Additional state-level tables.
+   - Additional cause-specific or age-specific outputs.
+   - Alternative plots.
+   - Data dictionaries.
+   - Detailed equations.
+   - Extra validation outputs.
+   - Any sensitivity analyses already present in the code or feasible within report.Rmd.
+
+15. Reproducibility
+   Include:
+   - Session information.
+   - Package versions.
+   - File paths used.
+   - Date the report was rendered.
+   - Git commit hash if available.
+   - Instructions for rendering the report.
+
+Technical requirements:
+- Use R Markdown.
+- Output format should be html_document or a similar HTML output.
+- The report should create output/report if it does not exist.
+- All figures, tables, and exported supporting files from the report should be written to output/report.
+- Use relative paths.
+- Use here::here() if the project already uses it, otherwise use robust relative paths.
+- Use data.table where consistent with the existing project.
+- Use ggplot2 for figures.
+- Use knitr::kable or kableExtra/gt if already used in the project.
+- Use clear chunk names.
+- Use message=FALSE and warning=FALSE where appropriate.
+- Keep code readable and modular inside the RMD.
+- Do not source scripts that modify project files unless already intended by the existing workflow.
+- Prefer reading existing intermediate outputs generated by the pipeline.
+- If a required object is not available, include defensive checks and informative messages.
+- Do not overwrite existing results outside output/report.
+
+Important constraints:
+- Do not modify any existing project scripts.
+- Do not change existing data files.
+- Do not change existing outputs outside output/report.
+- Do not refactor the pipeline.
+- Do not silently alter calculations.
+- Any new calculations required only for reporting should be placed inside report.Rmd.
+- If a calculation duplicates existing logic, clearly comment that it is for reporting only.
+- If uncertainty exists about a variable or method, add a note in the report rather than guessing.
+
+Style requirements:
+- The report should be written in polished academic language suitable for a dissertation methods/results appendix.
+- Use concise explanatory text before each table and figure.
+- Use informative captions.
+- Equations should be written in LaTeX.
+- Tables should be publication-readable.
+- Figures should have clear axis labels, legends, titles, and captions.
+- Avoid excessive raw code in the HTML output unless needed for reproducibility.
+
+After creating report.Rmd:
+1. Try to render it.
+2. If rendering fails, fix the errors.
+3. Ensure output files are saved in output/report.
+4. Provide a concise summary of:
+   - Files created
+   - Main report sections
+   - Any assumptions made
+   - Any warnings or issues that require my review

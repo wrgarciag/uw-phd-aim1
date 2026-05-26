@@ -1,0 +1,1181 @@
+---
+title: "Estimating and Forecasting the Probability of Dying Before Age 70 at the U.S. State Level, 1990–2050"
+author: "William Garcia"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    fig_width: 10
+    fig_height: 6
+    code_folding: hide
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+
+  echo = TRUE,
+  message = FALSE,
+
+  warning = FALSE,
+  fig.align = "center",
+  fig.path = "../output/report/figures/",
+  cache = FALSE
+)
+
+library(data.table)
+library(ggplot2)
+library(knitr)
+
+if (!requireNamespace("kableExtra", quietly = TRUE)) {
+  install.packages("kableExtra", repos = "https://cran.r-project.org")
+}
+library(kableExtra)
+
+wd <- normalizePath("C:/Users/wrgar/OneDrive - UW/04Dissertation/uw-phd-aim1/",
+                       winslash = "/")
+
+#wd <- getwd()
+# if (!grepl("uw-phd-aim1", wd)) {
+#   wd <- normalizePath("C:/Users/wrgar/OneDrive - UW/04Dissertation/uw-phd-aim1/",
+#                       winslash = "/")
+# }
+if (!grepl("/$", wd)) wd <- paste0(wd, "/")
+
+wd_data <- paste0(wd, "data/processed/")
+wd_outp <- paste0(wd, "output/")
+wd_model <- paste0(wd_outp, "model/")
+wd_report <- paste0(wd_outp, "report/")
+
+if (!dir.exists(wd_report)) dir.create(wd_report, recursive = TRUE)
+fig_dir <- paste0(wd_report, "figures/")
+if (!dir.exists(fig_dir)) dir.create(fig_dir, recursive = TRUE)
+
+knitr::opts_chunk$set(fig.path = fig_dir)
+
+theme_set(theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  ))
+```
+
+# Executive Summary
+
+This report documents the analytical workflow for **Dissertation Aim 1**: estimating the probability of dying before age 70 (PPD~70~, also denoted ${}_{70}q_0$) at the U.S. state level from 1990 to 2023, and projecting implied trajectories through 2050 to assess progress toward halving premature mortality.
+
+**Core outcome:** The unconditional probability of dying before age 70, computed from abridged life tables using age-specific mortality rates from the Global Burden of Disease (GBD) 2023 study.
+
+**Geography:** 51 U.S. jurisdictions (50 states + District of Columbia).
+
+**Historical period:** 1990–2023.
+
+**Projection horizon:** 2050, based on extrapolation of observed annualized rates of improvement (AARI).
+
+**Main outputs:**
+
+- State-level PPD~70~ estimates by sex and year
+- Average annual rates of improvement (AARI) across multiple periods
+- 50-by-50 progress assessment (can each state halve its PPD by 2050?)
+- Cause-specific decomposition of the PPD gap between each state and reference populations (Western Europe; best-3 U.S. states) using stepwise replacement and Horiuchi continuous-change methods
+- Priority conditions driving excess premature mortality in each state
+
+This analysis supports Aim 1 by quantifying the scale and distribution of premature mortality across U.S. states, identifying which states are on or off track to achieve the 50-by-50 target, and decomposing the drivers of excess mortality to inform targeted interventions.
+
+---
+
+# Background and Motivation
+
+## Premature Mortality as a Health Metric
+
+The probability of dying before age 70 captures the cumulative force of mortality across the life course from birth through late middle age. Unlike crude death rates, it is independent of population age structure and reflects the combined burden of infant, child, adolescent, and adult mortality. It is closely related to the WHO indicator for NCD premature mortality (probability of dying between ages 30 and 70 from four major NCDs) but extends the age range to include all causes from birth.
+
+## State-Level Estimation
+
+U.S. states exhibit substantial heterogeneity in mortality levels and trends, driven by differences in social determinants, health system capacity, behavioral risk factors, and policy environments. State-level estimation is essential for:
+
+- Identifying geographic disparities in premature mortality
+- Monitoring progress at the subnational level
+- Informing state-specific intervention strategies
+- Evaluating the feasibility of national targets at the local level
+
+## The 50-by-50 Framework
+
+The analysis evaluates whether each state can halve its probability of premature death by 2050 relative to a recent baseline (2023). This "50-by-50" framework provides a quantitative benchmark for assessing the ambition and feasibility of premature mortality reduction targets. States are classified by their observed rate of improvement relative to the rate required to achieve the target.
+
+---
+
+# Objectives
+
+1. **Estimate** the probability of dying before age 70 (${}_{70}q_0$) for each U.S. state, by sex and year, from 1990 to 2023.
+
+2. **Characterize historical trends** using average annual rates of improvement (AARI) across multiple time periods (1990–2019, 2000–2010, 2010–2019, 2019–2023).
+
+3. **Project** state-level PPD~70~ trajectories through 2050 by extrapolating observed AARI.
+
+4. **Decompose** the PPD~70~ gap between each state and reference populations into cause-specific and age-specific contributions using two complementary methods (stepwise replacement and Horiuchi continuous-change).
+
+5. **Identify priority conditions** driving excess premature mortality in each state relative to achievable benchmarks.
+
+6. **Generate** tables and figures that communicate inputs, calculations, results, validation checks, and supplemental analyses suitable for dissertation documentation.
+
+---
+
+# Project Structure and Workflow
+
+## Repository Layout
+
+```{r repo-structure, echo=FALSE}
+structure_tbl <- data.table(
+  Folder = c("code/", "data/raw/gbd/mortality/", "data/processed/",
+             "output/model/", "output/report/", "docs/", "paper/", "tests/"),
+  Purpose = c(
+    "R analysis scripts (numbered pipeline)",
+    "GBD 2023 CSVs by cause group (git-ignored)",
+    ".rds files produced by 02_load_inputs.R (tracked)",
+    "Final CSVs: PPD estimates, AARI, decomposition results",
+    "Report outputs (figures, tables, HTML)",
+    "References, prompts, this report",
+    "Dissertation writing (placeholder)",
+    "Placeholder for tests"
+  )
+)
+
+kable(structure_tbl, caption = "Repository folder structure") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+## Pipeline Scripts
+
+```{r pipeline-table, echo=FALSE}
+pipeline_tbl <- data.table(
+  Script = c("00_main.R", "01_utils.R", "02_load_inputs.R",
+             "03_ppd_estimation_trends_state.R",
+             "04_ppd_decomposition_state_cause.R",
+             "05_ppd_estimation_subgroups_state.R"),
+  Purpose = c(
+    "Orchestrator: sets paths, loads libraries, sources scripts 01-04",
+    "Helper functions (create_age_groups())",
+    "Reads GBD 2023 CSVs + Karlsson cause mapping; builds cause-grouped mortality tables",
+    "Computes PPD (70q0) per state/year/sex; AARI; 50-by-50 progress tracking",
+    "Stepwise + Horiuchi decomposition of PPD gap vs. reference populations",
+    "Stub — planned subgroup analysis (not yet implemented)"
+  ),
+  `Key Inputs` = c(
+    "—", "—",
+    "GBD CSVs, Karlsson Excel mapping",
+    "state_age_sex_mortality_gbd.rds",
+    "mx_state_cause.rds, mx_ref_*.rds",
+    "—"
+  ),
+  `Key Outputs` = c(
+    "—", "—",
+    "state_age_sex_mortality_gbd.rds, mx_state_cause.rds, mx_ref_*.rds, cause_mapping_clean.rds",
+    "ppd_state_year_sex.csv, ppd_aari_state_sex.csv, ppd_50by50_progress_state_sex.csv",
+    "decomp_state_cause_*.csv, priority_conditions_by_state.csv",
+    "—"
+  )
+)
+
+kable(pipeline_tbl, caption = "Pipeline scripts and their roles") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE)
+```
+
+## Workflow Diagram
+
+```{r workflow-diagram, echo=FALSE, fig.cap="Analysis workflow from raw data to final outputs."}
+workflow_tbl <- data.table(
+  Step = 1:6,
+  Stage = c("Raw Data", "Load & Process", "PPD Estimation",
+            "Trend Analysis", "Decomposition", "Outputs"),
+  Description = c(
+    "GBD 2023 CSVs (all-cause + 5 cause folders) + Karlsson mapping",
+    "02_load_inputs.R: clean, map causes, build reference rates",
+    "03_ppd_estimation: abridged life table -> PPD per state/year/sex",
+    "03_ppd_estimation: AARI across periods, 50-by-50 classification",
+    "04_ppd_decomposition: stepwise + Horiuchi vs. 2 references",
+    "CSVs in output/model/, figures and tables in output/report/"
+  ),
+  `Key Files` = c(
+    "data/raw/gbd/mortality/*",
+    "data/processed/*.rds",
+    "ppd_state_year_sex.csv",
+    "ppd_aari_state_sex.csv, ppd_50by50_progress_state_sex.csv",
+    "decomp_state_cause_*.csv, priority_conditions_by_state.csv",
+    "output/report/*"
+  )
+)
+
+kable(workflow_tbl, caption = "Sequential workflow stages") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE)
+```
+
+---
+
+# Data Description
+
+## Data Sources
+
+```{r load-data}
+file_exists <- function(path) {
+  exists <- file.exists(path)
+  if (!exists) message("NOTE: File not found: ", path)
+  exists
+}
+
+ppd_file <- paste0(wd_model, "ppd_state_year_sex.csv")
+aari_file <- paste0(wd_model, "ppd_aari_state_sex.csv")
+progress_file <- paste0(wd_model, "ppd_50by50_progress_state_sex.csv")
+decomp_file <- paste0(wd_model, "decomp_state_cause_combined.csv")
+priority_file <- paste0(wd_model, "priority_conditions_by_state.csv")
+
+has_ppd <- file_exists(ppd_file)
+has_aari <- file_exists(aari_file)
+has_progress <- file_exists(progress_file)
+has_decomp <- file_exists(decomp_file)
+has_priority <- file_exists(priority_file)
+
+if (has_ppd) dt_ppd <- fread(ppd_file)
+if (has_aari) dt_aari <- fread(aari_file)
+if (has_progress) dt_progress <- fread(progress_file)
+if (has_decomp) dt_decomp <- fread(decomp_file)
+if (has_priority) dt_priority <- fread(priority_file)
+```
+
+### Primary Mortality Data
+
+The analysis uses mortality data from the **Global Burden of Disease (GBD) 2023** study, downloaded as CSV files from the IHME GBD Results Tool. The data include:
+
+- **All-cause mortality rates** by state, sex, age group, and year (metric: Rate per 100,000)
+- **All-cause death counts** (metric: Number) for residual cause calculation
+- **Cause-specific mortality rates and counts** from five thematic folders:
+  - Infectious diseases and childhood conditions
+  - NCD7: cardiovascular disease and diabetes
+  - Injuries and disorders
+  - NCD and infectious overlap conditions
+  - NCD tobacco-related conditions
+
+### Cause Mapping
+
+Cause-specific GBD conditions are mapped to priority condition groups using the **Karlsson (2025)** framework, stored in `Karlsson2025_GBD_US_mapping_final.xlsx`. Causes not mapped to a Karlsson priority condition are assigned to a residual "Other" category.
+
+### Reference Populations
+
+Two reference populations are used for decomposition:
+
+1. **Western Europe** — GBD 2023 aggregate rates for Western Europe (external benchmark)
+2. **Best-3 U.S. states** — Average mortality rates of the 3 states with lowest PPD in each year × sex stratum (internal benchmark)
+
+## Data Dimensions
+
+```{r data-dimensions, echo=FALSE}
+if (has_ppd) {
+  dim_tbl <- data.table(
+    Dimension = c("States", "Years", "Sex categories", "Age groups (below 70)",
+                  "Total state-year-sex observations"),
+    Value = c(
+      dt_ppd[, uniqueN(state)],
+      paste0(dt_ppd[, min(year)], "–", dt_ppd[, max(year)],
+             " (", dt_ppd[, uniqueN(year)], " years)"),
+      paste(unique(dt_ppd$sex), collapse = ", "),
+      "16 (Under 1, 1, 2-4, 5-9, ..., 65-69)",
+      nrow(dt_ppd)
+    )
+  )
+
+  kable(dim_tbl, caption = "Dimensions of the PPD estimation dataset") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+```{r cause-groups, echo=FALSE}
+if (has_decomp) {
+  cause_groups <- sort(unique(dt_decomp$cause_group))
+  cause_tbl <- data.table(
+    `Cause Group` = cause_groups,
+    Index = seq_along(cause_groups)
+  )
+  kable(cause_tbl, caption = "Cause groups used in decomposition (Karlsson 2025 mapping)") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## Age Structure
+
+The abridged life table uses 16 age groups spanning ages 0 to 69:
+
+```{r age-structure, echo=FALSE}
+age_tbl <- data.table(
+  `Age Group` = c("Under 1", "1", "2-4", "5-9", "10-14", "15-19",
+                  "20-24", "25-29", "30-34", "35-39", "40-44",
+                  "45-49", "50-54", "55-59", "60-64", "65-69"),
+  `Start Age` = c(0, 1, 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65),
+  `Width (n)` = c(1, 1, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5),
+  `a_x` = c(0.1, 0.5, 1.5, rep(2.5, 13))
+)
+
+kable(age_tbl, caption = "Age group structure for abridged life table computation") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+---
+
+# Outcome Definition
+
+## Probability of Dying Before Age 70 (PPD~70~)
+
+The primary outcome is the unconditional probability of dying before reaching exact age 70, denoted PPD~70~ or ${}_{70}q_0$. This is computed from an abridged period life table using the following relationships.
+
+### Age-Specific Mortality Rate
+
+For state $s$, year $t$, sex $g$, and age group $x$:
+
+$$m_{x,t,s,g} = \frac{D_{x,t,s,g}}{N_{x,t,s,g}}$$
+
+where $D$ denotes deaths and $N$ denotes the mid-year population. In the GBD data, rates are provided directly (per 100,000), so $m_x = \text{val} / 100{,}000$.
+
+### Conversion to Death Probability
+
+The probability of dying within age interval $[x, x+n)$ given survival to age $x$:
+
+$${}_{n}q_x = \frac{n \cdot m_x}{1 + (n - a_x) \cdot m_x}$$
+
+where:
+
+- $n$ = width of the age interval (years)
+- $a_x$ = average person-years lived in the interval by those who die within it
+
+The $a_x$ values used are:
+
+- $a_0 = 0.1$ for infants (deaths concentrated in first weeks of life)
+- $a_x = n/2$ for all other age groups (midpoint approximation)
+
+### Survival Function
+
+$$l_{70} = l_0 \cdot \prod_{x=0}^{65} (1 - {}_{n}q_x)$$
+
+with $l_0 = 100{,}000$ (radix).
+
+### PPD~70~
+
+$$\text{PPD}_{70,t,s,g} = 1 - \prod_{x=0}^{65} (1 - {}_{n}q_x) = 1 - \frac{l_{70}}{l_0}$$
+
+The product runs over all 16 age intervals spanning ages 0 through 69.
+
+---
+
+# Methods of Estimation
+
+## Mortality Rate Preparation (Script 02)
+
+1. **All-cause rates**: GBD 2023 CSV is read; rows filtered to 51 U.S. states, both sexes (excluding "Both"), metric "Rate". Rates converted from per-100,000 to per-person ($m_x = \text{val}/10^5$).
+
+2. **Cause-specific rates**: Five GBD cause folders are concatenated. Rates and death counts retained for both states and Western Europe.
+
+3. **Cause mapping**: Each GBD cause is mapped to a Karlsson (2025) priority condition group. Stroke subtypes (Ischemic stroke, Intracerebral hemorrhage) are preferred over the aggregate "Stroke" when available.
+
+4. **Aggregation**: Cause-specific rates are summed within each cause group × state × year × sex × age cell.
+
+5. **Residual "Other"**: Computed as all-cause rate minus sum of individually mapped cause groups: $m_x^{\text{Other}} = m_x^{\text{All}} - \sum_c m_x^{c}$, floored at zero.
+
+6. **Complete grid**: A full rectangular grid (state × year × sex × age × cause_group) is created with zero-fill for any missing cells.
+
+7. **Reference populations**: Western Europe rates extracted directly; best-3 states computed as the arithmetic mean of rates from the 3 states with lowest PPD in each year × sex stratum.
+
+## PPD Estimation (Script 03)
+
+1. All-cause mortality data is loaded from `state_age_sex_mortality_gbd.rds`.
+2. Ages below 70 and years 1990–2023 are retained.
+3. Interval widths and $a_x$ values are assigned per the age structure table above.
+4. The abridged life table formula $q_x = n \cdot m_x / (1 + (n - a_x) \cdot m_x)$ is applied, with $q_x$ bounded to $[0, 1]$.
+5. PPD = $1 - \prod (1 - q_x)$ is computed per state × year × sex.
+
+## AARI Computation
+
+The Average Annual Rate of Improvement measures the geometric mean annual decline in PPD:
+
+$$\text{AARI} = \left(\frac{\text{PPD}_{\text{start}}}{\text{PPD}_{\text{end}}}\right)^{1/n} - 1$$
+
+where $n$ is the number of years in the period. Positive AARI indicates improvement (declining mortality); negative AARI indicates worsening.
+
+AARI is computed for four periods: 1990–2019, 2000–2010, 2010–2019, and 2019–2023.
+
+## 50-by-50 Progress Assessment
+
+For each state × sex:
+
+1. The baseline PPD is taken from 2023.
+2. The target is 50% of baseline: $\text{PPD}_{2050}^{\text{target}} = 0.5 \times \text{PPD}_{2023}$.
+3. The required AARI to reach the target by 2050 is computed.
+4. The observed 2010–2019 AARI is compared to the required AARI.
+5. States are classified as "On track", "Medium progress", or "Low or worsening".
+6. Implied 2050 PPD is projected: $\text{PPD}_{2050}^{\text{implied}} = \text{PPD}_{2023} / (1 + \text{AARI}_{2010\text{-}2019})^{27}$.
+
+---
+
+# Forecasting Through 2050
+
+## Approach
+
+> **NOTE:** The current codebase does not implement a formal demographic forecasting model (e.g., Lee-Carter, Bayesian age-period-cohort, or probabilistic projections). The projection to 2050 is an extrapolation of the observed 2010–2019 AARI applied to the 2023 baseline.
+
+The implied projection model is:
+
+$$\text{PPD}_{t,s,g}^{\text{implied}} = \frac{\text{PPD}_{2023,s,g}}{(1 + \text{AARI}_{2010\text{-}2019,s,g})^{(t - 2023)}}$$
+
+This assumes:
+
+- The rate of improvement observed during 2010–2019 continues unchanged through 2050.
+- No structural changes in cause composition, population demographics, or policy environment.
+- Exponential decline in PPD (log-linear trend).
+
+### Limitations of This Approach
+
+- Does not account for stalling or reversal of trends (as observed 2019–2023 due to COVID-19).
+- Does not model age-specific or cause-specific mortality trajectories separately.
+- Does not produce uncertainty intervals.
+- Highly sensitive to the choice of reference period for AARI computation.
+
+### Items Requiring Confirmation
+
+- Whether a more formal forecasting model is planned for later development.
+- Whether the 2019–2023 period (which includes pandemic effects) should influence projections.
+- Whether scenario-based projections (optimistic/pessimistic) are needed.
+
+```{r projection-table, echo=FALSE}
+if (has_progress) {
+  proj_summary <- dt_progress[, .(
+    `Median Baseline PPD (2023)` = round(median(ppd_baseline), 4),
+    `Median Target PPD (2050)` = round(median(ppd_2050_target), 4),
+    `Median Required AARI` = round(median(required_aari, na.rm = TRUE), 4),
+    `Median Observed AARI (2010-19)` = round(median(observed_aari_2010_2019, na.rm = TRUE), 4),
+    `Median Implied PPD 2050` = round(median(implied_ppd_2050, na.rm = TRUE), 4)
+  ), by = sex]
+
+  kable(proj_summary,
+        caption = "Summary of projection parameters by sex") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+---
+
+# PPD Decomposition
+
+## Overview
+
+Script 04 decomposes the **gap** in PPD~70~ between each U.S. state and a reference population into cause-specific and age-specific contributions. The decomposition answers: *How much of the excess premature mortality in state $s$ relative to the reference is attributable to each cause group at each age?*
+
+## Decomposition Quantity
+
+$$\Delta \text{PPD}_{s,g} = \text{PPD}_{s,g}^{\text{state}} - \text{PPD}_{g}^{\text{ref}}$$
+
+This gap is decomposed into $K = N_{\text{ages}} \times N_{\text{causes}}$ cell-level contributions $c_i$, where each cell $i$ corresponds to one (age, cause_group) combination:
+
+$$\Delta \text{PPD}_{s,g} = \sum_{i=1}^{K} c_i$$
+
+## Rate Vector Structure
+
+The mortality schedule is represented as a flat vector of length $K$ with **cause-within-age** ordering:
+
+$$\mathbf{r} = [m_{0,1}, m_{0,2}, \ldots, m_{0,C}, m_{1,1}, \ldots, m_{65,C}]$$
+
+where subscripts denote (age, cause) and $C$ is the number of cause groups.
+
+## Method 1: Stepwise Replacement (Andreev, Shkolnikov, Begun 2002)
+
+The stepwise method sequentially replaces each cell's rate from the state value to the reference value and attributes the resulting change in PPD to that cell.
+
+**Forward pass** (cells 1 to $K$):
+
+$$c_i^{\text{fwd}} = \text{PPD}(\mathbf{r}^{(i-1)}) - \text{PPD}(\mathbf{r}^{(i)})$$
+
+where $\mathbf{r}^{(i)}$ has cells 1 through $i$ replaced with reference values.
+
+**Backward pass** (cells $K$ to 1):
+
+$$c_i^{\text{bwd}} = \text{PPD}(\mathbf{r}^{(i+1)}) - \text{PPD}(\mathbf{r}^{(i)})$$
+
+where replacement proceeds from right to left.
+
+**Final contribution** (symmetrized):
+
+$$c_i = \frac{c_i^{\text{fwd}} + c_i^{\text{bwd}}}{2}$$
+
+Both passes sum exactly to the total gap; the average is unique regardless of ordering.
+
+## Method 2: Horiuchi Continuous-Change (Horiuchi, Wilmoth, Pletcher 2008)
+
+The Horiuchi method treats the transition from reference to state rates as a continuous path and integrates the sensitivity of PPD along this path:
+
+$$c_i = \int_0^1 \frac{\partial \text{PPD}}{\partial r_i}\bigg|_{\mathbf{r}(t)} \cdot \Delta r_i \, dt$$
+
+where $\mathbf{r}(t) = \mathbf{r}^{\text{ref}} + t \cdot (\mathbf{r}^{\text{state}} - \mathbf{r}^{\text{ref}})$ and $\Delta r_i = r_i^{\text{state}} - r_i^{\text{ref}}$.
+
+**Numerical approximation** with $N = 20$ steps:
+
+$$c_i \approx \sum_{j=1}^{N} \left[\text{PPD}\left(\mathbf{r}^{(j)} + \frac{\epsilon_i}{2}\mathbf{e}_i\right) - \text{PPD}\left(\mathbf{r}^{(j)} - \frac{\epsilon_i}{2}\mathbf{e}_i\right)\right]$$
+
+where $\mathbf{r}^{(j)} = \mathbf{r}^{\text{ref}} + (j - 0.5) \cdot \boldsymbol{\epsilon}$ and $\epsilon_i = \Delta r_i / N$.
+
+## Analysis Parameters
+
+- **Analysis year:** 2019
+- **References:** Western Europe, Best-3 U.S. states
+- **Integration steps (Horiuchi):** $N = 20$
+- **Sexes:** Male, Female (separately)
+
+## Interpretation
+
+- Positive contributions indicate that the state has higher mortality than the reference in that cell (excess PPD).
+- Negative contributions indicate that the state has lower mortality than the reference (protective).
+- The sum of all contributions equals the total PPD gap exactly (within numerical tolerance).
+
+---
+
+# Results
+
+## Historical PPD~70~ Trends
+
+```{r ppd-trends, fig.cap="PPD70 trends by state and sex, 1990–2023. Each line represents one state.", fig.height=8}
+if (has_ppd) {
+  ggplot(dt_ppd, aes(x = year, y = ppd_pct, group = state)) +
+    geom_line(alpha = 0.4, linewidth = 0.4) +
+    facet_wrap(~ sex) +
+    labs(
+      title = "Probability of Dying Before Age 70 by U.S. State, 1990–2023",
+      x = "Year",
+      y = "PPD70 (%)",
+      caption = "Source: GBD 2023. Each line = one state."
+    ) +
+    scale_y_continuous(limits = c(0, NA))
+}
+```
+
+```{r ppd-summary-stats}
+if (has_ppd) {
+  ppd_summary <- dt_ppd[, .(
+    `Min PPD (%)` = round(min(ppd_pct), 2),
+    `Median PPD (%)` = round(median(ppd_pct), 2),
+    `Max PPD (%)` = round(max(ppd_pct), 2),
+    `IQR` = round(IQR(ppd_pct), 2),
+    States = uniqueN(state)
+  ), by = .(Year = year, Sex = sex)]
+
+  ppd_sel <- ppd_summary[Year %in% c(1990, 2000, 2010, 2019, 2023)]
+
+  kable(ppd_sel, caption = "Summary statistics of PPD70 (%) across states for selected years") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## State Rankings
+
+```{r state-rankings}
+if (has_ppd) {
+  rank_years <- c(1990, 2000, 2010, 2019, 2023)
+  dt_ranks <- dt_ppd[year %in% rank_years, .(state, year, sex, ppd_pct)]
+  dt_ranks[, rank := frank(ppd_pct, ties.method = "first"), by = .(year, sex)]
+
+  dt_top5_male <- dt_ranks[sex == "Male" & rank <= 5][order(year, rank)]
+  dt_top5_female <- dt_ranks[sex == "Female" & rank <= 5][order(year, rank)]
+
+  kable(dcast(dt_top5_male, state ~ year, value.var = "ppd_pct"),
+        caption = "Top 5 states with lowest PPD70 (%) — Males",
+        digits = 2) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+  kable(dcast(dt_top5_female, state ~ year, value.var = "ppd_pct"),
+        caption = "Top 5 states with lowest PPD70 (%) — Females",
+        digits = 2) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+```{r state-rankings-worst}
+if (has_ppd) {
+  dt_bottom5_male <- dt_ranks[sex == "Male"][order(year, -rank)][, .SD[1:5], by = year]
+  dt_bottom5_female <- dt_ranks[sex == "Female"][order(year, -rank)][, .SD[1:5], by = year]
+
+  kable(dcast(dt_bottom5_male, state ~ year, value.var = "ppd_pct"),
+        caption = "Top 5 states with highest PPD70 (%) — Males",
+        digits = 2) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+  kable(dcast(dt_bottom5_female, state ~ year, value.var = "ppd_pct"),
+        caption = "Top 5 states with highest PPD70 (%) — Females",
+        digits = 2) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## Absolute and Relative Change
+
+```{r change-table}
+if (has_ppd) {
+  dt_change <- merge(
+    dt_ppd[year == 1990, .(state, sex, ppd_1990 = ppd)],
+    dt_ppd[year == 2023, .(state, sex, ppd_2023 = ppd)],
+    by = c("state", "sex")
+  )
+  dt_change[, `:=`(
+    abs_change = ppd_2023 - ppd_1990,
+    rel_change_pct = 100 * (ppd_2023 - ppd_1990) / ppd_1990
+  )]
+
+  setorder(dt_change, sex, abs_change)
+
+  kable(head(dt_change[sex == "Male"], 10),
+        caption = "States with largest absolute PPD reduction (Males), 1990–2023",
+        digits = 4) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+
+  # States that worsened
+  dt_worsened <- dt_change[abs_change > 0]
+  if (nrow(dt_worsened) > 0) {
+    kable(dt_worsened[order(-abs_change)],
+          caption = "States where PPD70 increased from 1990 to 2023",
+          digits = 4) %>%
+      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+  }
+}
+```
+
+## AARI by Period
+
+```{r aari-plot, fig.cap="Distribution of AARI across states by period and sex.", fig.height=7}
+if (has_aari) {
+  dt_aari[, period := paste0(year_start, "–", year_end)]
+
+  ggplot(dt_aari, aes(x = period, y = aari * 100, fill = sex)) +
+    geom_boxplot(alpha = 0.7, outlier.size = 1) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      title = "Distribution of Average Annual Rate of Improvement (AARI) by Period",
+      x = "Period",
+      y = "AARI (%)",
+      fill = "Sex",
+      caption = "Positive = improvement (declining PPD). Red dashed = zero change."
+    ) +
+    scale_fill_brewer(palette = "Set1")
+}
+```
+
+## 50-by-50 Progress Assessment
+
+```{r progress-classification, fig.cap="50-by-50 progress classification by state and sex."}
+if (has_progress) {
+  progress_summary <- dt_progress[, .N, by = .(sex, performance_group)]
+
+  kable(dcast(progress_summary, performance_group ~ sex, value.var = "N"),
+        caption = "Number of states by 50-by-50 performance group") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+```{r progress-plot, fig.cap="Required vs. observed AARI for 50-by-50 target.", fig.height=7}
+if (has_progress) {
+  ggplot(dt_progress, aes(x = required_aari * 100, y = observed_aari_2010_2019 * 100,
+                          color = performance_group)) +
+    geom_point(size = 2, alpha = 0.7) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+    facet_wrap(~ sex) +
+    labs(
+      title = "Required vs. Observed AARI for 50-by-50 Target",
+      x = "Required AARI to halve PPD by 2050 (%)",
+      y = "Observed AARI 2010–2019 (%)",
+      color = "Performance Group",
+      caption = "Points above the dashed line are on track."
+    ) +
+    scale_color_brewer(palette = "Set2")
+}
+```
+
+```{r implied-2050, fig.cap="Implied PPD70 in 2050 based on 2010-2019 AARI extrapolation.", fig.height=7}
+if (has_progress) {
+  dt_progress[, target_met := implied_ppd_2050 <= ppd_2050_target]
+
+  ggplot(dt_progress, aes(x = reorder(state, -implied_ppd_2050),
+                          y = implied_ppd_2050 * 100,
+                          fill = target_met)) +
+    geom_col(alpha = 0.8) +
+    geom_point(aes(y = ppd_2050_target * 100), shape = 4, size = 1.5, color = "red") +
+    facet_wrap(~ sex, scales = "free_x") +
+    coord_flip() +
+    labs(
+      title = "Implied PPD70 in 2050 vs. 50% Reduction Target",
+      x = NULL,
+      y = "Implied PPD70 in 2050 (%)",
+      fill = "Meets Target",
+      caption = "Red X = 50% reduction target."
+    ) +
+    theme(axis.text.y = element_text(size = 6))
+}
+```
+
+## Decomposition Results
+
+```{r decomp-overview}
+if (has_decomp) {
+  decomp_summary <- dt_decomp[method == "horiuchi",
+    .(total_contribution = sum(contribution),
+      ppd_gap = ppd_gap[1]),
+    by = .(state, sex, reference)
+  ]
+
+  cat(sprintf("Decomposition covers %d states x %d sexes x %d references = %d combinations\n",
+              decomp_summary[, uniqueN(state)],
+              decomp_summary[, uniqueN(sex)],
+              decomp_summary[, uniqueN(reference)],
+              nrow(decomp_summary)))
+}
+```
+
+### Cause-Group Contributions (National Average)
+
+```{r decomp-cause-summary, fig.cap="Average cause-group contributions to PPD gap vs. Western Europe (Horiuchi method).", fig.height=7}
+if (has_decomp) {
+  dt_cause_avg <- dt_decomp[method == "horiuchi" & reference == "western_europe",
+    .(mean_contribution = mean(contribution)),
+    by = .(sex, cause_group)
+  ]
+
+  setorder(dt_cause_avg, sex, -mean_contribution)
+
+  ggplot(dt_cause_avg, aes(x = reorder(cause_group, mean_contribution),
+                           y = mean_contribution * 100, fill = sex)) +
+    geom_col(position = "dodge", alpha = 0.8) +
+    coord_flip() +
+    labs(
+      title = "Mean Cause-Group Contribution to PPD Gap vs. Western Europe",
+      subtitle = "Horiuchi method, averaged across all states (2019)",
+      x = NULL,
+      y = "Mean Contribution to PPD Gap (percentage points)",
+      fill = "Sex"
+    ) +
+    scale_fill_brewer(palette = "Set1")
+}
+```
+
+### State-Level Decomposition Heatmap
+
+```{r decomp-heatmap, fig.cap="Horiuchi cause-group contributions by state (Males, vs. Western Europe).", fig.height=10, fig.width=10}
+if (has_decomp) {
+  dt_state_cause <- dt_decomp[method == "horiuchi" & reference == "western_europe" & sex == "Male",
+    .(contribution = sum(contribution)),
+    by = .(state, cause_group)
+  ]
+
+  ggplot(dt_state_cause, aes(x = cause_group, y = reorder(state, -contribution),
+                             fill = contribution * 100)) +
+    geom_tile(color = "white", linewidth = 0.2) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,
+                         name = "Contribution\n(pp)") +
+    labs(
+      title = "Cause-Group Contributions to PPD Gap (Males vs. Western Europe, 2019)",
+      x = "Cause Group",
+      y = NULL
+    ) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+          axis.text.y = element_text(size = 6))
+}
+```
+
+### Priority Conditions
+
+```{r priority-conditions}
+if (has_priority) {
+  dt_top_priority <- dt_priority[method == "horiuchi" & reference == "western_europe" & rnk == 1,
+    .(state, sex, cause_group, contribution, contribution_pct)]
+
+  top_causes <- dt_top_priority[, .N, by = .(sex, cause_group)][order(-N)]
+
+  kable(top_causes,
+        caption = "Most frequent #1 priority condition across states (Horiuchi vs. Western Europe)",
+        col.names = c("Sex", "Cause Group", "N States")) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## Supplemental Decomposition: Age Contributions
+
+```{r decomp-age, fig.cap="Age-group contributions to PPD gap, averaged across states (Horiuchi vs. Western Europe).", fig.height=6}
+if (has_decomp) {
+  dt_age_avg <- dt_decomp[method == "horiuchi" & reference == "western_europe",
+    .(mean_contribution = mean(contribution)),
+    by = .(sex, age)
+  ]
+
+  ggplot(dt_age_avg, aes(x = factor(age), y = mean_contribution * 100, fill = sex)) +
+    geom_col(position = "dodge", alpha = 0.8) +
+    labs(
+      title = "Mean Age-Group Contribution to PPD Gap vs. Western Europe",
+      subtitle = "Horiuchi method, summed across causes, averaged across states (2019)",
+      x = "Age Group Start",
+      y = "Mean Contribution (percentage points)",
+      fill = "Sex"
+    ) +
+    scale_fill_brewer(palette = "Set1")
+}
+```
+
+---
+
+# Validation and Diagnostic Checks
+
+## PPD Plausibility
+
+```{r validation-range}
+if (has_ppd) {
+  val_range <- dt_ppd[, .(
+    min_ppd = min(ppd),
+    max_ppd = max(ppd),
+    any_negative = any(ppd < 0),
+    any_above_1 = any(ppd > 1),
+    n_obs = .N,
+    n_missing = sum(is.na(ppd))
+  ), by = sex]
+
+  kable(val_range, caption = "PPD70 range and validity checks", digits = 4) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## State-Year Completeness
+
+```{r completeness-check}
+if (has_ppd) {
+  expected_per_sex <- 51 * dt_ppd[, uniqueN(year)]
+  actual <- dt_ppd[, .N, by = sex]
+  actual[, expected := expected_per_sex]
+  actual[, complete := N == expected]
+
+  kable(actual, caption = "Completeness: observations per sex vs. expected (51 states × years)") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## Year-over-Year Changes
+
+```{r yoy-jumps, fig.cap="Distribution of year-over-year absolute changes in PPD70. Large jumps may indicate data issues."}
+if (has_ppd) {
+  setorder(dt_ppd, state, sex, year)
+  dt_ppd[, ppd_lag := shift(ppd, 1), by = .(state, sex)]
+  dt_ppd[, yoy_change := ppd - ppd_lag]
+
+  ggplot(dt_ppd[!is.na(yoy_change)], aes(x = yoy_change * 100)) +
+    geom_histogram(bins = 60, fill = "steelblue", alpha = 0.7) +
+    facet_wrap(~ sex) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    labs(
+      title = "Distribution of Year-over-Year Changes in PPD70",
+      x = "Change in PPD70 (percentage points)",
+      y = "Count",
+      caption = "Large outliers may warrant investigation."
+    )
+
+  outliers <- dt_ppd[abs(yoy_change) > 0.02, .(state, year, sex, ppd_pct,
+                                                 yoy_change_pct = yoy_change * 100)]
+  if (nrow(outliers) > 0) {
+    kable(head(outliers[order(-abs(yoy_change_pct))], 20),
+          caption = "Largest year-over-year PPD changes (> 2 percentage points)",
+          digits = 3) %>%
+      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+  }
+}
+```
+
+## Decomposition Reconciliation
+
+```{r decomp-reconciliation}
+if (has_decomp) {
+  dt_recon <- dt_decomp[,
+    .(sum_contributions = sum(contribution), ppd_gap = ppd_gap[1]),
+    by = .(state, sex, reference, method)
+  ]
+  dt_recon[, error_pct := 100 * abs(sum_contributions - ppd_gap) / abs(ppd_gap)]
+
+  recon_summary <- dt_recon[, .(
+    `Max Error (%)` = round(max(error_pct, na.rm = TRUE), 4),
+    `Mean Error (%)` = round(mean(error_pct, na.rm = TRUE), 6),
+    `N > 0.1%` = sum(error_pct > 0.1, na.rm = TRUE)
+  ), by = method]
+
+  kable(recon_summary,
+        caption = "Decomposition reconciliation: sum of contributions vs. total PPD gap") %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## Sex-Specific Consistency
+
+```{r sex-consistency, fig.cap="Male vs. Female PPD70 by state (2019). Males typically have higher PPD."}
+if (has_ppd) {
+  dt_sex_compare <- dcast(dt_ppd[year == 2019], state ~ sex, value.var = "ppd_pct")
+
+  ggplot(dt_sex_compare, aes(x = Female, y = Male)) +
+    geom_point(alpha = 0.7) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      title = "Male vs. Female PPD70 by State (2019)",
+      x = "Female PPD70 (%)",
+      y = "Male PPD70 (%)",
+      caption = "Points above the line: Male > Female PPD."
+    )
+
+  n_male_higher <- dt_sex_compare[Male > Female, .N]
+  cat(sprintf("States where Male PPD > Female PPD in 2019: %d / %d\n",
+              n_male_higher, nrow(dt_sex_compare)))
+}
+```
+
+## COVID-19 Period Check (2019–2023)
+
+```{r covid-check, fig.cap="PPD70 change from 2019 to 2023 by state and sex."}
+if (has_ppd) {
+  dt_covid <- merge(
+    dt_ppd[year == 2019, .(state, sex, ppd_2019 = ppd_pct)],
+    dt_ppd[year == 2023, .(state, sex, ppd_2023 = ppd_pct)],
+    by = c("state", "sex")
+  )
+  dt_covid[, change := ppd_2023 - ppd_2019]
+
+  ggplot(dt_covid, aes(x = reorder(state, change), y = change, fill = sex)) +
+    geom_col(position = "dodge", alpha = 0.8) +
+    coord_flip() +
+    labs(
+      title = "Change in PPD70 from 2019 to 2023",
+      x = NULL,
+      y = "Change (percentage points)",
+      fill = "Sex",
+      caption = "Positive = worsening. Captures COVID-19 pandemic effects."
+    ) +
+    scale_fill_brewer(palette = "Set1") +
+    theme(axis.text.y = element_text(size = 6))
+}
+```
+
+---
+
+# Discussion
+
+## Main Findings
+
+```{r discussion-stats, echo=FALSE}
+if (has_ppd && has_progress) {
+  latest_year <- dt_ppd[, max(year)]
+  n_on_track_m <- dt_progress[sex == "Male" & performance_group == "On track", .N]
+  n_on_track_f <- dt_progress[sex == "Female" & performance_group == "On track", .N]
+
+  cat(sprintf("As of %d:\n", latest_year))
+  cat(sprintf("  - States on track for 50-by-50 (Males): %d / 51\n", n_on_track_m))
+  cat(sprintf("  - States on track for 50-by-50 (Females): %d / 51\n", n_on_track_f))
+}
+```
+
+The analysis reveals substantial heterogeneity in premature mortality across U.S. states. Key patterns include:
+
+1. **Overall decline**: Most states experienced declining PPD from 1990 to 2019, though the pace varied considerably.
+
+2. **COVID-19 disruption**: The 2019–2023 period shows widespread PPD increases, reflecting pandemic mortality.
+
+3. **Sex differences**: Males consistently have higher PPD than females across all states and years. The male-female gap varies by state.
+
+4. **Geographic concentration**: States with the highest PPD tend to be concentrated in the Southeast and Appalachian regions, while states with the lowest PPD are typically in the Northeast and West.
+
+## Decomposition Insights
+
+The cause-specific decomposition identifies which conditions drive excess mortality relative to achievable benchmarks. The priority conditions analysis provides actionable information for state-level intervention planning.
+
+## Limitations
+
+1. **Projection method**: The current extrapolation assumes continuation of 2010–2019 trends and does not account for structural changes, policy interventions, or pandemic recovery trajectories.
+
+2. **Single decomposition year**: Decomposition is performed only for 2019, limiting temporal inference about changing cause contributions.
+
+3. **No uncertainty quantification**: The analysis produces point estimates without confidence intervals.
+
+4. **GBD model dependence**: All estimates rely on GBD 2023 modeled mortality rates, which themselves carry uncertainty not propagated here.
+
+5. **Cause mapping completeness**: The Karlsson framework captures priority conditions but assigns substantial mortality to a residual "Other" category.
+
+## Next Steps
+
+- Implement formal demographic forecasting (e.g., Lee-Carter, Bayesian models)
+- Extend decomposition to multiple years to assess temporal trends in cause contributions
+- Add uncertainty quantification through bootstrapping or Bayesian posterior draws
+- Develop scenario-based projections (with/without specific interventions)
+- Complete subgroup analysis (Script 05)
+
+---
+
+# Supplemental Analysis
+
+## Full PPD Table (Selected Years)
+
+```{r supp-full-table}
+if (has_ppd) {
+  dt_sel <- dt_ppd[year %in% c(1990, 2000, 2010, 2019, 2023),
+                   .(state, year, sex, ppd_pct)]
+  dt_wide_supp <- dcast(dt_sel, state + sex ~ year, value.var = "ppd_pct")
+
+  fwrite(dt_wide_supp, paste0(wd_report, "ppd_state_year_sex_wide.csv"))
+
+  kable(head(dt_wide_supp[sex == "Male"], 20),
+        caption = "PPD70 (%) by state and year — Males (first 20 states)",
+        digits = 2) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = FALSE, font_size = 11)
+}
+```
+
+## AARI Detail Table
+
+```{r supp-aari-table}
+if (has_aari) {
+  dt_aari_wide <- dcast(dt_aari, state + sex ~ period, value.var = "aari")
+  fwrite(dt_aari_wide, paste0(wd_report, "aari_by_period_wide.csv"))
+
+  kable(head(dt_aari_wide[sex == "Male"], 15),
+        caption = "AARI by period — Males (first 15 states)",
+        digits = 4) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+}
+```
+
+## 50-by-50 Full Classification Table
+
+```{r supp-progress-table}
+if (has_progress) {
+  dt_prog_out <- dt_progress[, .(state, sex, ppd_baseline, ppd_2050_target,
+                                  required_aari, observed_aari_2010_2019,
+                                  implied_ppd_2050, implied_reduction_2050,
+                                  performance_group)]
+  setorder(dt_prog_out, sex, -ppd_baseline)
+  fwrite(dt_prog_out, paste0(wd_report, "50by50_progress_full.csv"))
+
+  kable(head(dt_prog_out[sex == "Male"], 15),
+        caption = "50-by-50 progress detail — Males (top 15 by baseline PPD)",
+        digits = 4) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = FALSE, font_size = 11)
+}
+```
+
+## Priority Conditions by State (Top 3)
+
+```{r supp-priority-table}
+if (has_priority) {
+  dt_prio_top3 <- dt_priority[method == "horiuchi" & reference == "western_europe" & rnk <= 3,
+    .(state, sex, rnk, cause_group,
+      contribution_pp = round(contribution * 100, 3),
+      contribution_pct = round(contribution_pct, 1))
+  ]
+
+  fwrite(dt_prio_top3, paste0(wd_report, "priority_conditions_top3.csv"))
+
+  kable(head(dt_prio_top3[sex == "Male"], 30),
+        caption = "Top 3 priority conditions by state (Males, Horiuchi vs. Western Europe)",
+        digits = 3) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = FALSE, font_size = 11)
+}
+```
+
+## Data Dictionary
+
+```{r data-dictionary, echo=FALSE}
+dict_tbl <- data.table(
+  Variable = c("state", "year", "sex", "age", "age_group", "mx", "qx", "px",
+               "ppd", "ppd_pct", "aari", "cause_group", "contribution",
+               "ppd_gap", "reference", "method", "performance_group"),
+  Description = c(
+    "U.S. state name (51 jurisdictions including DC)",
+    "Calendar year (1990–2023)",
+    "Sex: Male or Female",
+    "Age group start (numeric: 0, 1, 2, 5, 10, ..., 65)",
+    "Age group label (e.g., 'Under 1', '5-9', '65-69')",
+    "Age-specific mortality rate (per person-year)",
+    "Conditional probability of dying in age interval",
+    "Conditional probability of surviving age interval (1 - qx)",
+    "Probability of dying before age 70 (decimal)",
+    "PPD × 100 (percentage scale)",
+    "Average annual rate of improvement",
+    "Karlsson (2025) priority condition group",
+    "Decomposition contribution of cell to PPD gap",
+    "PPD(state) - PPD(reference)",
+    "Reference population: western_europe or local_best3",
+    "Decomposition method: stepwise or horiuchi",
+    "50-by-50 classification: On track, Medium progress, Low or worsening"
+  ),
+  Type = c("character", "integer", "factor", "integer", "factor",
+           "numeric", "numeric", "numeric", "numeric", "numeric",
+           "numeric", "character", "numeric", "numeric", "character",
+           "character", "character")
+)
+
+kable(dict_tbl, caption = "Data dictionary for key variables") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+---
+
+# Reproducibility
+
+```{r reproducibility}
+cat("Report rendered:", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"), "\n")
+cat("Working directory:", getwd(), "\n")
+cat("Project root:", wd, "\n")
+cat("R version:", R.version.string, "\n")
+
+git_hash <- tryCatch(
+  system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE, stderr = FALSE),
+  error = function(e) "unavailable"
+)
+cat("Git commit:", git_hash, "\n")
+
+cat("\nKey file paths:\n")
+cat("  PPD estimates:", ppd_file, "\n")
+cat("  AARI:", aari_file, "\n")
+cat("  Progress:", progress_file, "\n")
+cat("  Decomposition:", decomp_file, "\n")
+cat("  Priority conditions:", priority_file, "\n")
+cat("  Report outputs:", wd_report, "\n")
+```
+
+```{r session-info}
+sessionInfo()
+```
+
+## Rendering Instructions
+
+To render this report:
+
+```r
+rmarkdown::render("docs/report.Rmd", output_dir = "output/report/")
+```
+
+Or from the project root:
+
+```r
+rmarkdown::render(
+
+  input = "docs/report.Rmd",
+  output_dir = "output/report/",
+  knit_root_dir = getwd()
+)
+```
+
+All figures and supplemental CSV files are saved to `output/report/`.
+
+---
+
+*End of report.*

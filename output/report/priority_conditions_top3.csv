@@ -1,0 +1,307 @@
+state,sex,rnk,cause_group,contribution_pp,contribution_pct
+Alabama,Female,1,Other,3.013,25.6
+Alabama,Female,2,Atherosclerotic CVDs,1.813,15.4
+Alabama,Female,3,Mental and substance use disorders,1.768,15
+Alabama,Male,1,Other,2.935,18.6
+Alabama,Male,2,Atherosclerotic CVDs,2.913,18.4
+Alabama,Male,3,Mental and substance use disorders,2.669,16.9
+Alaska,Female,1,Mental and substance use disorders,3.035,40.2
+Alaska,Female,2,NCDs strongly linked to tobacco use,0.784,10.4
+Alaska,Female,3,Other,0.745,9.9
+Alaska,Male,1,Mental and substance use disorders,3.816,50.5
+Alaska,Male,2,Suicide,1.32,17.5
+Alaska,Male,3,Atherosclerotic CVDs,0.87,11.5
+Arizona,Female,1,Mental and substance use disorders,2.101,34.6
+Arizona,Female,2,Atherosclerotic CVDs,0.73,12
+Arizona,Female,3,Diabetes,0.578,9.5
+Arizona,Male,1,Mental and substance use disorders,4.489,49.7
+Arizona,Male,2,Atherosclerotic CVDs,1.164,12.9
+Arizona,Male,3,Diabetes,0.92,10.2
+Arkansas,Female,1,Other,3.108,25.4
+Arkansas,Female,2,Atherosclerotic CVDs,2.401,19.6
+Arkansas,Female,3,NCDs strongly linked to tobacco use,1.887,15.4
+Arkansas,Male,1,Atherosclerotic CVDs,3.846,25.4
+Arkansas,Male,2,Other,2.915,19.2
+Arkansas,Male,3,Mental and substance use disorders,1.794,11.8
+California,Female,1,Mental and substance use disorders,1.144,41.4
+California,Female,2,Atherosclerotic CVDs,0.629,22.8
+California,Female,3,Diabetes,0.431,15.6
+California,Male,1,Mental and substance use disorders,2.469,69.2
+California,Male,2,NCDs strongly linked to tobacco use,-1.147,-32.1
+California,Male,3,Other,-1.134,-31.8
+Colorado,Female,1,Mental and substance use disorders,1.843,49.4
+Colorado,Female,2,Suicide,0.361,9.7
+Colorado,Female,3,Diabetes,0.296,7.9
+Colorado,Male,1,Mental and substance use disorders,3.114,68.9
+Colorado,Male,2,Suicide,0.982,21.7
+Colorado,Male,3,Other,-0.823,-18.2
+Connecticut,Female,1,Mental and substance use disorders,1.889,65.9
+Connecticut,Female,2,Other,-0.52,-18.1
+Connecticut,Female,3,Atherosclerotic CVDs,0.412,14.4
+Connecticut,Male,1,Mental and substance use disorders,5.091,102.7
+Connecticut,Male,2,Other,-1.504,-30.3
+Connecticut,Male,3,NCDs strongly linked to tobacco use,-0.786,-15.8
+Delaware,Female,1,Mental and substance use disorders,2.384,37.1
+Delaware,Female,2,Atherosclerotic CVDs,0.801,12.5
+Delaware,Female,3,NCDs strongly linked to tobacco use,0.781,12.1
+Delaware,Male,1,Mental and substance use disorders,5.543,57.9
+Delaware,Male,2,Atherosclerotic CVDs,1.035,10.8
+Delaware,Male,3,Diabetes,0.728,7.6
+District of Columbia,Female,1,Other,3.34,29.8
+District of Columbia,Female,2,Mental and substance use disorders,2.612,23.3
+District of Columbia,Female,3,Atherosclerotic CVDs,1.773,15.8
+District of Columbia,Male,1,Mental and substance use disorders,6.338,40.4
+District of Columbia,Male,2,Atherosclerotic CVDs,2.447,15.6
+District of Columbia,Male,3,Other,2.408,15.3
+Florida,Female,1,Mental and substance use disorders,2.007,33.6
+Florida,Female,2,Atherosclerotic CVDs,0.875,14.7
+Florida,Female,3,NCDs strongly linked to tobacco use,0.615,10.3
+Florida,Male,1,Mental and substance use disorders,3.803,43.3
+Florida,Male,2,Atherosclerotic CVDs,1.39,15.8
+Florida,Male,3,Road injury,0.913,10.4
+Georgia,Female,1,Other,2.239,26.4
+Georgia,Female,2,Mental and substance use disorders,1.35,15.9
+Georgia,Female,3,Atherosclerotic CVDs,1.308,15.4
+Georgia,Male,1,Mental and substance use disorders,2.197,20.9
+Georgia,Male,2,Other,1.921,18.3
+Georgia,Male,3,Atherosclerotic CVDs,1.906,18.2
+Hawaii,Female,1,Mental and substance use disorders,0.753,33.7
+Hawaii,Female,2,Diabetes,0.399,17.9
+Hawaii,Female,3,Atherosclerotic CVDs,0.382,17.1
+Hawaii,Male,1,Mental and substance use disorders,2.187,50.7
+Hawaii,Male,2,NCDs strongly linked to tobacco use,-0.893,-20.7
+Hawaii,Male,3,Atherosclerotic CVDs,0.886,20.5
+Idaho,Female,1,Mental and substance use disorders,1.414,33.6
+Idaho,Female,2,Atherosclerotic CVDs,0.464,11
+Idaho,Female,3,Diabetes,0.393,9.3
+Idaho,Male,1,Mental and substance use disorders,1.669,44.1
+Idaho,Male,2,Suicide,0.901,23.8
+Idaho,Male,3,Road injury,0.659,17.4
+Illinois,Female,1,Mental and substance use disorders,1.501,26.7
+Illinois,Female,2,Atherosclerotic CVDs,0.997,17.7
+Illinois,Female,3,Other,0.821,14.6
+Illinois,Male,1,Mental and substance use disorders,3.343,45.6
+Illinois,Male,2,Atherosclerotic CVDs,1.452,19.8
+Illinois,Male,3,Violence,0.762,10.4
+Indiana,Female,1,Mental and substance use disorders,2.259,24.6
+Indiana,Female,2,Other,1.706,18.6
+Indiana,Female,3,NCDs strongly linked to tobacco use,1.52,16.5
+Indiana,Male,1,Mental and substance use disorders,3.963,34.1
+Indiana,Male,2,Atherosclerotic CVDs,2.054,17.7
+Indiana,Male,3,Other,1.16,10
+Iowa,Female,1,Atherosclerotic CVDs,1.084,20.4
+Iowa,Female,2,Other,0.993,18.7
+Iowa,Female,3,Mental and substance use disorders,0.895,16.8
+Iowa,Male,1,Atherosclerotic CVDs,1.955,30.2
+Iowa,Male,2,Mental and substance use disorders,1.491,23
+Iowa,Male,3,Suicide,0.714,11
+Kansas,Female,1,Other,1.487,20.3
+Kansas,Female,2,Mental and substance use disorders,1.357,18.6
+Kansas,Female,3,NCDs strongly linked to tobacco use,1.148,15.7
+Kansas,Male,1,Mental and substance use disorders,1.953,23.5
+Kansas,Male,2,Atherosclerotic CVDs,1.727,20.8
+Kansas,Male,3,Other,0.881,10.6
+Kentucky,Female,1,Mental and substance use disorders,3.15,25.1
+Kentucky,Female,2,NCDs strongly linked to tobacco use,2.389,19
+Kentucky,Female,3,Other,2.09,16.6
+Kentucky,Male,1,Mental and substance use disorders,5.251,32.1
+Kentucky,Male,2,Atherosclerotic CVDs,3.006,18.4
+Kentucky,Male,3,NCDs strongly linked to tobacco use,1.88,11.5
+Louisiana,Female,1,Other,2.896,24.9
+Louisiana,Female,2,Mental and substance use disorders,2.194,18.8
+Louisiana,Female,3,Atherosclerotic CVDs,1.857,15.9
+Louisiana,Male,1,Mental and substance use disorders,3.954,25.2
+Louisiana,Male,2,Atherosclerotic CVDs,2.828,18
+Louisiana,Male,3,Other,2.644,16.9
+Maine,Female,1,Mental and substance use disorders,1.848,38.4
+Maine,Female,2,NCDs strongly linked to tobacco use,0.952,19.8
+Maine,Female,3,Diabetes,0.403,8.4
+Maine,Male,1,Mental and substance use disorders,4.426,57
+Maine,Male,2,Suicide,0.752,9.7
+Maine,Male,3,Atherosclerotic CVDs,0.672,8.7
+Maryland,Female,1,Mental and substance use disorders,1.416,24.1
+Maryland,Female,2,Other,1.062,18.1
+Maryland,Female,3,Atherosclerotic CVDs,0.943,16
+Maryland,Male,1,Mental and substance use disorders,3.444,42.5
+Maryland,Male,2,Atherosclerotic CVDs,1.143,14.1
+Maryland,Male,3,Violence,1.011,12.5
+Massachusetts,Female,1,Mental and substance use disorders,2.057,78.6
+Massachusetts,Female,2,Other,-0.91,-34.8
+Massachusetts,Female,3,NCDs strongly linked to tobacco use,0.324,12.4
+Massachusetts,Male,1,Mental and substance use disorders,5.104,121.5
+Massachusetts,Male,2,Other,-1.741,-41.4
+Massachusetts,Male,3,NCDs strongly linked to tobacco use,-0.62,-14.8
+Michigan,Female,1,Mental and substance use disorders,2.051,26.8
+Michigan,Female,2,Atherosclerotic CVDs,1.318,17.2
+Michigan,Female,3,Other,1.1,14.4
+Michigan,Male,1,Mental and substance use disorders,3.557,38.9
+Michigan,Male,2,Atherosclerotic CVDs,2.089,22.8
+Michigan,Male,3,Diabetes,0.705,7.7
+Minnesota,Female,1,Mental and substance use disorders,1.186,40.1
+Minnesota,Female,2,Diabetes,0.327,11
+Minnesota,Female,3,NCDs strongly linked to tobacco use,0.237,8
+Minnesota,Male,1,Mental and substance use disorders,2.031,86.2
+Minnesota,Male,2,Other,-0.806,-34.2
+Minnesota,Male,3,NCDs strongly linked to tobacco use,-0.606,-25.7
+Mississippi,Female,1,Other,4.129,30.1
+Mississippi,Female,2,Atherosclerotic CVDs,2.319,16.9
+Mississippi,Female,3,NCDs strongly linked to tobacco use,1.775,12.9
+Mississippi,Male,1,Other,4.791,25
+Mississippi,Male,2,Atherosclerotic CVDs,3.806,19.9
+Mississippi,Male,3,Mental and substance use disorders,2.168,11.3
+Missouri,Female,1,Mental and substance use disorders,2.11,23
+Missouri,Female,2,Atherosclerotic CVDs,1.577,17.2
+Missouri,Female,3,NCDs strongly linked to tobacco use,1.49,16.2
+Missouri,Male,1,Mental and substance use disorders,3.794,30.5
+Missouri,Male,2,Atherosclerotic CVDs,2.575,20.7
+Missouri,Male,3,Other,1.059,8.5
+Montana,Female,1,Mental and substance use disorders,1.601,26.8
+Montana,Female,2,NCDs strongly linked to tobacco use,0.749,12.6
+Montana,Female,3,Other,0.713,12
+Montana,Male,1,Mental and substance use disorders,2.253,31.7
+Montana,Male,2,Atherosclerotic CVDs,1.481,20.8
+Montana,Male,3,Suicide,1.259,17.7
+Nebraska,Female,1,Other,1.184,23.5
+Nebraska,Female,2,Mental and substance use disorders,0.851,16.9
+Nebraska,Female,3,NCDs strongly linked to tobacco use,0.742,14.7
+Nebraska,Male,1,Mental and substance use disorders,1.044,20.1
+Nebraska,Male,2,Atherosclerotic CVDs,0.857,16.5
+Nebraska,Male,3,Road injury,0.675,13
+Nevada,Female,1,Mental and substance use disorders,2.246,30.5
+Nevada,Female,2,Atherosclerotic CVDs,1.063,14.4
+Nevada,Female,3,Other,0.894,12.1
+Nevada,Male,1,Mental and substance use disorders,3.503,37.3
+Nevada,Male,2,Atherosclerotic CVDs,1.993,21.2
+Nevada,Male,3,Suicide,0.859,9.1
+New Hampshire,Female,1,Mental and substance use disorders,1.918,59.7
+New Hampshire,Female,2,Other,-0.546,-17
+New Hampshire,Female,3,NCDs strongly linked to tobacco use,0.541,16.9
+New Hampshire,Male,1,Mental and substance use disorders,4.126,85.9
+New Hampshire,Male,2,Other,-1.162,-24.2
+New Hampshire,Male,3,Atherosclerotic CVDs,0.721,15
+New Jersey,Female,1,Mental and substance use disorders,1.743,51.1
+New Jersey,Female,2,Atherosclerotic CVDs,0.595,17.4
+New Jersey,Female,3,Diabetes,0.338,9.9
+New Jersey,Male,1,Mental and substance use disorders,4.525,95.9
+New Jersey,Male,2,Other,-1.301,-27.6
+New Jersey,Male,3,Atherosclerotic CVDs,0.877,18.6
+New Mexico,Female,1,Mental and substance use disorders,3.254,37.8
+New Mexico,Female,2,Atherosclerotic CVDs,0.921,10.7
+New Mexico,Female,3,Other,0.876,10.2
+New Mexico,Male,1,Mental and substance use disorders,6.254,49.4
+New Mexico,Male,2,Atherosclerotic CVDs,1.681,13.3
+New Mexico,Male,3,Suicide,1.128,8.9
+New York,Female,1,Mental and substance use disorders,1.304,43.9
+New York,Female,2,Atherosclerotic CVDs,0.903,30.4
+New York,Female,3,Other,-0.339,-11.4
+New York,Male,1,Mental and substance use disorders,3.151,86.3
+New York,Male,2,Other,-1.489,-40.8
+New York,Male,3,Atherosclerotic CVDs,1.394,38.2
+North Carolina,Female,1,Mental and substance use disorders,1.963,25.2
+North Carolina,Female,2,Other,1.182,15.2
+North Carolina,Female,3,Atherosclerotic CVDs,1.104,14.2
+North Carolina,Male,1,Mental and substance use disorders,3.817,35.8
+North Carolina,Male,2,Atherosclerotic CVDs,1.759,16.5
+North Carolina,Male,3,Diabetes,0.937,8.8
+North Dakota,Female,1,Mental and substance use disorders,1.076,21.7
+North Dakota,Female,2,Other,1.036,20.9
+North Dakota,Female,3,Atherosclerotic CVDs,0.635,12.8
+North Dakota,Male,1,Mental and substance use disorders,1.825,29.9
+North Dakota,Male,2,Atherosclerotic CVDs,1.223,20
+North Dakota,Male,3,Suicide,0.908,14.9
+Ohio,Female,1,Mental and substance use disorders,2.985,31.8
+Ohio,Female,2,NCDs strongly linked to tobacco use,1.338,14.3
+Ohio,Female,3,Atherosclerotic CVDs,1.335,14.2
+Ohio,Male,1,Mental and substance use disorders,5.366,44.6
+Ohio,Male,2,Atherosclerotic CVDs,2.085,17.3
+Ohio,Male,3,Diabetes,0.881,7.3
+Oklahoma,Female,1,Other,3.299,27.3
+Oklahoma,Female,2,Mental and substance use disorders,1.946,16.1
+Oklahoma,Female,3,NCDs strongly linked to tobacco use,1.892,15.7
+Oklahoma,Male,1,Other,3.771,25.5
+Oklahoma,Male,2,Mental and substance use disorders,2.782,18.8
+Oklahoma,Male,3,Atherosclerotic CVDs,2.321,15.7
+Oregon,Female,1,Mental and substance use disorders,1.532,32.5
+Oregon,Female,2,NCDs strongly linked to tobacco use,0.608,12.9
+Oregon,Female,3,Other,0.501,10.6
+Oregon,Male,1,Mental and substance use disorders,2.952,53.3
+Oregon,Male,2,Suicide,0.772,14
+Oregon,Male,3,Diabetes,0.679,12.3
+Pennsylvania,Female,1,Mental and substance use disorders,2.544,40.3
+Pennsylvania,Female,2,Atherosclerotic CVDs,0.962,15.2
+Pennsylvania,Female,3,NCDs strongly linked to tobacco use,0.651,10.3
+Pennsylvania,Male,1,Mental and substance use disorders,5.037,58.7
+Pennsylvania,Male,2,Atherosclerotic CVDs,1.489,17.4
+Pennsylvania,Male,3,Diabetes,0.623,7.3
+Rhode Island,Female,1,Mental and substance use disorders,1.842,52.2
+Rhode Island,Female,2,Atherosclerotic CVDs,0.587,16.6
+Rhode Island,Female,3,NCDs strongly linked to tobacco use,0.503,14.2
+Rhode Island,Male,1,Mental and substance use disorders,4.463,83.2
+Rhode Island,Male,2,Other,-1.175,-21.9
+Rhode Island,Male,3,Atherosclerotic CVDs,0.976,18.2
+South Carolina,Female,1,Mental and substance use disorders,2.188,22.7
+South Carolina,Female,2,Other,2.061,21.4
+South Carolina,Female,3,Atherosclerotic CVDs,1.276,13.2
+South Carolina,Male,1,Mental and substance use disorders,3.707,26.8
+South Carolina,Male,2,Atherosclerotic CVDs,2.229,16.1
+South Carolina,Male,3,Other,1.886,13.7
+South Dakota,Female,1,Other,1.325,22.5
+South Dakota,Female,2,Mental and substance use disorders,1.002,17.1
+South Dakota,Female,3,Atherosclerotic CVDs,0.74,12.6
+South Dakota,Male,1,Atherosclerotic CVDs,1.756,26.7
+South Dakota,Male,2,Mental and substance use disorders,1.307,19.9
+South Dakota,Male,3,Suicide,0.982,15
+Tennessee,Female,1,Mental and substance use disorders,2.86,24.6
+Tennessee,Female,2,Other,2.001,17.2
+Tennessee,Female,3,Atherosclerotic CVDs,1.904,16.4
+Tennessee,Male,1,Mental and substance use disorders,4.537,29.1
+Tennessee,Male,2,Atherosclerotic CVDs,3.277,21
+Tennessee,Male,3,Other,1.784,11.4
+Texas,Female,1,Other,1.423,22.6
+Texas,Female,2,Atherosclerotic CVDs,1.24,19.7
+Texas,Female,3,Mental and substance use disorders,0.892,14.2
+Texas,Male,1,Atherosclerotic CVDs,1.911,24.1
+Texas,Male,2,Mental and substance use disorders,1.509,19
+Texas,Male,3,Other,1.243,15.7
+Utah,Female,1,Mental and substance use disorders,1.632,42.2
+Utah,Female,2,Diabetes,0.513,13.3
+Utah,Female,3,Suicide,0.386,10
+Utah,Male,1,Mental and substance use disorders,2.42,86.8
+Utah,Male,2,Other,-1.072,-38.4
+Utah,Male,3,NCDs strongly linked to tobacco use,-1.07,-38.4
+Vermont,Female,1,Mental and substance use disorders,1.727,45.8
+Vermont,Female,2,Atherosclerotic CVDs,0.578,15.3
+Vermont,Female,3,NCDs strongly linked to tobacco use,0.532,14.1
+Vermont,Male,1,Mental and substance use disorders,3.244,69.3
+Vermont,Male,2,Atherosclerotic CVDs,1.065,22.8
+Vermont,Male,3,Other,-0.915,-19.6
+Virginia,Female,1,Mental and substance use disorders,1.396,24.2
+Virginia,Female,2,Atherosclerotic CVDs,0.947,16.4
+Virginia,Female,3,Other,0.943,16.4
+Virginia,Male,1,Mental and substance use disorders,2.831,42.2
+Virginia,Male,2,Atherosclerotic CVDs,1.272,19
+Virginia,Male,3,Diabetes,0.764,11.4
+Washington,Female,1,Mental and substance use disorders,1.586,39.1
+Washington,Female,2,Atherosclerotic CVDs,0.445,11
+Washington,Female,3,NCDs strongly linked to tobacco use,0.35,8.6
+Washington,Male,1,Mental and substance use disorders,2.588,63.4
+Washington,Male,2,Atherosclerotic CVDs,0.716,17.5
+Washington,Male,3,Other,-0.639,-15.6
+West Virginia,Female,1,Mental and substance use disorders,4.176,29.6
+West Virginia,Female,2,NCDs strongly linked to tobacco use,2.402,17
+West Virginia,Female,3,Other,2.241,15.9
+West Virginia,Male,1,Mental and substance use disorders,7.753,41.5
+West Virginia,Male,2,Atherosclerotic CVDs,2.696,14.4
+West Virginia,Male,3,NCDs strongly linked to tobacco use,1.832,9.8
+Wisconsin,Female,1,Mental and substance use disorders,1.807,37.4
+Wisconsin,Female,2,Atherosclerotic CVDs,0.666,13.8
+Wisconsin,Female,3,NCDs strongly linked to tobacco use,0.51,10.6
+Wisconsin,Male,1,Mental and substance use disorders,3.121,59.1
+Wisconsin,Male,2,Atherosclerotic CVDs,1.053,19.9
+Wisconsin,Male,3,Other,-0.534,-10.1
+Wyoming,Female,1,Mental and substance use disorders,1.948,26.5
+Wyoming,Female,2,Other,1.309,17.8
+Wyoming,Female,3,NCDs strongly linked to tobacco use,1.095,14.9
+Wyoming,Male,1,Mental and substance use disorders,2.604,33.5
+Wyoming,Male,2,Suicide,1.414,18.2
+Wyoming,Male,3,Atherosclerotic CVDs,1.085,14
