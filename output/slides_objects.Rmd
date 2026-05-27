@@ -1,0 +1,405 @@
+---
+title: "Slide Deck Object Generation"
+author: "William Garcia"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(data.table)
+library(ggplot2)
+
+if (!requireNamespace("kableExtra", quietly = TRUE)) {
+  install.packages("kableExtra", repos = "https://cran.r-project.org")
+}
+library(kableExtra)
+
+wd <- normalizePath("C:/Users/wrgar/OneDrive - UW/04Dissertation/uw-phd-aim1/",
+                     winslash = "/")
+if (!grepl("/$", wd)) wd <- paste0(wd, "/")
+
+wd_data  <- paste0(wd, "data/processed/")
+wd_model <- paste0(wd, "output/model/")
+obj_dir  <- paste0(wd, "output/slides/")
+
+if (!dir.exists(obj_dir)) dir.create(obj_dir, recursive = TRUE)
+
+theme_slides <- theme_minimal(base_size = 14) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 16),
+    strip.text    = element_text(face = "bold", size = 13),
+    legend.position = "bottom",
+    axis.text     = element_text(size = 11),
+    axis.title    = element_text(size = 13)
+  )
+theme_set(theme_slides)
+
+uwpurple <- "#4B2E83"
+uwgold   <- "#85754D"
+```
+
+```{r load-data}
+dt_ppd      <- fread(paste0(wd_model, "ppd_state_year_sex.csv"))
+dt_aari     <- fread(paste0(wd_model, "ppd_aari_state_sex.csv"))
+dt_progress <- fread(paste0(wd_model, "ppd_50by50_progress_state_sex.csv"))
+dt_decomp   <- fread(paste0(wd_model, "decomp_state_cause_combined.csv"))
+dt_priority <- fread(paste0(wd_model, "priority_conditions_by_state.csv"))
+```
+
+# Figure 1: PPD trends by state and sex
+
+```{r fig-ppd-trends}
+p_trends <- ggplot(dt_ppd, aes(x = year, y = ppd_pct, group = state)) +
+  geom_line(alpha = 0.35, linewidth = 0.4, color = uwpurple) +
+  facet_wrap(~ sex) +
+  labs(
+    title = "Probability of Dying Before Age 70 by U.S. State, 1990–2023",
+    x = "Year",
+    y = expression(PPD[70] ~ "(%)"),
+    caption = "Source: GBD 2023. Each line = one state."
+  ) +
+  scale_y_continuous(limits = c(0, NA))
+
+ggsave(paste0(obj_dir, "fig_ppd_trends.png"), p_trends,
+       width = 10, height = 5.5, dpi = 300, bg = "white")
+```
+
+# Figure 2: National median PPD with range ribbon
+
+```{r fig-ppd-national}
+dt_nat <- dt_ppd[, .(
+  median_ppd = median(ppd_pct),
+  p25 = quantile(ppd_pct, 0.25),
+  p75 = quantile(ppd_pct, 0.75),
+  min_ppd = min(ppd_pct),
+  max_ppd = max(ppd_pct)
+), by = .(year, sex)]
+
+p_national <- ggplot(dt_nat, aes(x = year)) +
+  geom_ribbon(aes(ymin = min_ppd, ymax = max_ppd), fill = uwpurple, alpha = 0.10) +
+  geom_ribbon(aes(ymin = p25, ymax = p75), fill = uwpurple, alpha = 0.25) +
+  geom_line(aes(y = median_ppd), color = uwpurple, linewidth = 1.2) +
+  facet_wrap(~ sex) +
+  labs(
+    title = "National Median PPD with Interquartile and Full Range",
+    x = "Year",
+    y = expression(PPD[70] ~ "(%)"),
+    caption = "Dark band = IQR; light band = min–max across 51 states."
+  ) +
+  scale_y_continuous(limits = c(0, NA))
+
+ggsave(paste0(obj_dir, "fig_ppd_national.png"), p_national,
+       width = 10, height = 5, dpi = 300, bg = "white")
+```
+
+# Figure 3: AARI boxplots by period
+
+```{r fig-aari-boxplot}
+dt_aari[, period := paste0(year_start, "–", year_end)]
+dt_aari[, period := factor(period, levels = c(
+  "1990–2019", "2000–2010", "2010–2019", "2019–2023"
+))]
+
+p_aari <- ggplot(dt_aari, aes(x = period, y = aari * 100, fill = sex)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 1.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.5) +
+  labs(
+    title = "Average Annual Rate of Improvement (AARI) by Period",
+    x = "Period",
+    y = "AARI (%)",
+    fill = "Sex",
+    caption = "Positive = declining PPD (improvement). Dashed line = zero change."
+  ) +
+  scale_fill_manual(values = c("Male" = uwpurple, "Female" = uwgold))
+
+ggsave(paste0(obj_dir, "fig_aari_boxplot.png"), p_aari,
+       width = 9, height = 5.5, dpi = 300, bg = "white")
+```
+
+# Figure 4: 50-by-50 required vs observed AARI
+
+```{r fig-50by50-scatter}
+p_50by50 <- ggplot(dt_progress,
+  aes(x = required_aari * 100, y = observed_aari_2010_2019 * 100,
+      color = performance_group)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+  facet_wrap(~ sex) +
+  labs(
+    title = "Required vs. Observed AARI for 50-by-50 Target",
+    x = "Required AARI to halve PPD by 2050 (%)",
+    y = "Observed AARI 2010–2019 (%)",
+    color = "Performance",
+    caption = "Points above dashed line = on track to halve PPD by 2050."
+  ) +
+  scale_color_manual(values = c(
+    "On track"          = "#2ca02c",
+    "Medium progress"   = uwgold,
+    "Low or worsening"  = "#d62728"
+  ))
+
+ggsave(paste0(obj_dir, "fig_50by50_scatter.png"), p_50by50,
+       width = 10, height = 5.5, dpi = 300, bg = "white")
+```
+
+# Figure 5: Implied PPD 2050 bar chart
+
+```{r fig-implied-2050}
+dt_progress[, target_met := implied_ppd_2050 <= ppd_2050_target]
+
+p_implied <- ggplot(
+  dt_progress[sex == "Male"],
+  aes(x = reorder(state, -implied_ppd_2050),
+      y = implied_ppd_2050 * 100,
+      fill = target_met)) +
+  geom_col(alpha = 0.85) +
+  geom_point(aes(y = ppd_2050_target * 100), shape = 4, size = 1.2, color = "red") +
+  coord_flip() +
+  labs(
+    title = "Implied PPD in 2050 vs. 50% Reduction Target (Males)",
+    x = NULL,
+    y = expression(Implied ~ PPD[70] ~ "in 2050 (%)"),
+    fill = "Meets Target",
+    caption = "Red X = 50% reduction target. Based on 2010–2019 AARI extrapolation."
+  ) +
+  scale_fill_manual(values = c("TRUE" = "#2ca02c", "FALSE" = "#d62728")) +
+  theme(axis.text.y = element_text(size = 6))
+
+ggsave(paste0(obj_dir, "fig_implied_2050_male.png"), p_implied,
+       width = 8, height = 10, dpi = 300, bg = "white")
+
+p_implied_f <- ggplot(
+  dt_progress[sex == "Female"],
+  aes(x = reorder(state, -implied_ppd_2050),
+      y = implied_ppd_2050 * 100,
+      fill = target_met)) +
+  geom_col(alpha = 0.85) +
+  geom_point(aes(y = ppd_2050_target * 100), shape = 4, size = 1.2, color = "red") +
+  coord_flip() +
+  labs(
+    title = "Implied PPD in 2050 vs. 50% Reduction Target (Females)",
+    x = NULL,
+    y = expression(Implied ~ PPD[70] ~ "in 2050 (%)"),
+    fill = "Meets Target",
+    caption = "Red X = 50% reduction target. Based on 2010–2019 AARI extrapolation."
+  ) +
+  scale_fill_manual(values = c("TRUE" = "#2ca02c", "FALSE" = "#d62728")) +
+  theme(axis.text.y = element_text(size = 6))
+
+ggsave(paste0(obj_dir, "fig_implied_2050_female.png"), p_implied_f,
+       width = 8, height = 10, dpi = 300, bg = "white")
+```
+
+# Figure 6: Cause-group contributions (national average, Horiuchi vs WE)
+
+```{r fig-decomp-cause-avg}
+dt_cause_avg <- dt_decomp[
+  method == "horiuchi" & reference == "western_europe",
+  .(mean_contribution = mean(contribution)),
+  by = .(sex, cause_group)
+]
+setorder(dt_cause_avg, sex, -mean_contribution)
+
+p_cause <- ggplot(dt_cause_avg,
+  aes(x = reorder(cause_group, mean_contribution),
+      y = mean_contribution * 100, fill = sex)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  coord_flip() +
+  labs(
+    title = "Mean Cause-Group Contribution to PPD Gap vs. Western Europe",
+    subtitle = "Horiuchi method, averaged across all states (2019)",
+    x = NULL,
+    y = "Mean Contribution (percentage points)",
+    fill = "Sex"
+  ) +
+  scale_fill_manual(values = c("Male" = uwpurple, "Female" = uwgold))
+
+ggsave(paste0(obj_dir, "fig_decomp_cause_avg.png"), p_cause,
+       width = 10, height = 6.5, dpi = 300, bg = "white")
+```
+
+# Figure 7: Decomposition heatmap (Males, vs WE)
+
+```{r fig-decomp-heatmap}
+dt_state_cause <- dt_decomp[
+  method == "horiuchi" & reference == "western_europe" & sex == "Male",
+  .(contribution = sum(contribution)),
+  by = .(state, cause_group)
+]
+
+p_heat <- ggplot(dt_state_cause,
+  aes(x = cause_group,
+      y = reorder(state, -contribution),
+      fill = contribution * 100)) +
+  geom_tile(color = "white", linewidth = 0.2) +
+  scale_fill_gradient2(low = "#2171B5", mid = "white", high = "#E31A1C",
+                       midpoint = 0, name = "Contribution\n(pp)") +
+  labs(
+    title = "Cause-Group Contributions to PPD Gap (Males vs. Western Europe, 2019)",
+    x = "Cause Group", y = NULL
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+    axis.text.y = element_text(size = 6)
+  )
+
+ggsave(paste0(obj_dir, "fig_decomp_heatmap_male.png"), p_heat,
+       width = 10, height = 11, dpi = 300, bg = "white")
+```
+
+# Figure 8: Age-group contributions (national average)
+
+```{r fig-decomp-age}
+dt_age_avg <- dt_decomp[
+  method == "horiuchi" & reference == "western_europe",
+  .(mean_contribution = mean(contribution)),
+  by = .(sex, age)
+]
+
+p_age <- ggplot(dt_age_avg,
+  aes(x = factor(age), y = mean_contribution * 100, fill = sex)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  labs(
+    title = "Mean Age-Group Contribution to PPD Gap vs. Western Europe",
+    subtitle = "Horiuchi method, summed across causes, averaged across states (2019)",
+    x = "Age Group Start", y = "Mean Contribution (pp)", fill = "Sex"
+  ) +
+  scale_fill_manual(values = c("Male" = uwpurple, "Female" = uwgold))
+
+ggsave(paste0(obj_dir, "fig_decomp_age.png"), p_age,
+       width = 10, height = 5.5, dpi = 300, bg = "white")
+```
+
+# Figure 9: Male vs Female PPD scatter (2019)
+
+```{r fig-sex-scatter}
+dt_sex <- dcast(dt_ppd[year == 2019], state ~ sex, value.var = "ppd_pct")
+
+p_sex <- ggplot(dt_sex, aes(x = Female, y = Male)) +
+  geom_point(alpha = 0.8, color = uwpurple, size = 2.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Male vs. Female PPD by State (2019)",
+    x = expression(Female ~ PPD[70] ~ "(%)"),
+    y = expression(Male ~ PPD[70] ~ "(%)"),
+    caption = "Points above dashed line: male PPD > female PPD."
+  )
+
+ggsave(paste0(obj_dir, "fig_sex_scatter.png"), p_sex,
+       width = 7, height = 6, dpi = 300, bg = "white")
+```
+
+# Figure 10: COVID-19 period impact (2019 to 2023)
+
+```{r fig-covid-impact}
+dt_covid <- merge(
+  dt_ppd[year == 2019, .(state, sex, ppd_2019 = ppd_pct)],
+  dt_ppd[year == 2023, .(state, sex, ppd_2023 = ppd_pct)],
+  by = c("state", "sex")
+)
+dt_covid[, change := ppd_2023 - ppd_2019]
+
+p_covid <- ggplot(dt_covid,
+  aes(x = reorder(state, change), y = change, fill = sex)) +
+  geom_col(position = "dodge", alpha = 0.85) +
+  coord_flip() +
+  labs(
+    title = "Change in PPD from 2019 to 2023",
+    x = NULL, y = "Change (percentage points)", fill = "Sex",
+    caption = "Positive = worsening. Captures COVID-19 pandemic effects."
+  ) +
+  scale_fill_manual(values = c("Male" = uwpurple, "Female" = uwgold)) +
+  theme(axis.text.y = element_text(size = 6))
+
+ggsave(paste0(obj_dir, "fig_covid_impact.png"), p_covid,
+       width = 8, height = 10, dpi = 300, bg = "white")
+```
+
+# Table objects (RDS)
+
+```{r table-ppd-summary}
+tbl_ppd_summary <- dt_ppd[
+  year %in% c(1990, 2000, 2010, 2019, 2023),
+  .(
+    `Min PPD (%)` = round(min(ppd_pct), 2),
+    `Median PPD (%)` = round(median(ppd_pct), 2),
+    `Max PPD (%)` = round(max(ppd_pct), 2),
+    `IQR` = round(IQR(ppd_pct), 2)
+  ),
+  by = .(Year = year, Sex = sex)
+]
+saveRDS(tbl_ppd_summary, paste0(obj_dir, "tbl_ppd_summary.rds"))
+```
+
+```{r table-progress-classification}
+tbl_progress_class <- dt_progress[, .N, by = .(sex, performance_group)]
+tbl_progress_class <- dcast(tbl_progress_class, performance_group ~ sex, value.var = "N")
+saveRDS(tbl_progress_class, paste0(obj_dir, "tbl_progress_class.rds"))
+```
+
+```{r table-progress-summary}
+tbl_proj_summary <- dt_progress[, .(
+  `Median Baseline PPD` = round(median(ppd_baseline), 4),
+  `Median Target PPD (2050)` = round(median(ppd_2050_target), 4),
+  `Median Required AARI` = round(median(required_aari, na.rm = TRUE), 4),
+  `Median Observed AARI (2010-19)` = round(median(observed_aari_2010_2019, na.rm = TRUE), 4),
+  `Median Implied PPD 2050` = round(median(implied_ppd_2050, na.rm = TRUE), 4)
+), by = sex]
+saveRDS(tbl_proj_summary, paste0(obj_dir, "tbl_proj_summary.rds"))
+```
+
+```{r table-priority-freq}
+dt_top_priority <- dt_priority[
+  method == "horiuchi" & reference == "western_europe" & rnk == 1,
+  .(state, sex, cause_group, contribution, contribution_pct)
+]
+tbl_priority_freq <- dt_top_priority[, .N, by = .(Sex = sex, `Cause Group` = cause_group)][order(-N)]
+saveRDS(tbl_priority_freq, paste0(obj_dir, "tbl_priority_freq.rds"))
+```
+
+```{r table-data-dimensions}
+tbl_data_dims <- data.table(
+  Dimension = c("States/jurisdictions", "Years", "Sex categories",
+                "Age groups (below 70)", "Cause groups",
+                "Reference populations"),
+  Value = c(
+    "51 (50 states + DC)",
+    paste0(dt_ppd[, min(year)], "–", dt_ppd[, max(year)],
+           " (", dt_ppd[, uniqueN(year)], " years)"),
+    "Male, Female",
+    "16",
+    as.character(dt_decomp[, uniqueN(cause_group)]),
+    "Western Europe; Best-3 U.S. states"
+  )
+)
+saveRDS(tbl_data_dims, paste0(obj_dir, "tbl_data_dims.rds"))
+```
+
+```{r table-decomp-reconciliation}
+dt_recon <- dt_decomp[,
+  .(sum_contributions = sum(contribution), ppd_gap = ppd_gap[1]),
+  by = .(state, sex, reference, method)
+]
+dt_recon[, error_pct := 100 * abs(sum_contributions - ppd_gap) / abs(ppd_gap)]
+
+tbl_recon <- dt_recon[, .(
+  `Max Error (%)` = round(max(error_pct, na.rm = TRUE), 4),
+  `Mean Error (%)` = round(mean(error_pct, na.rm = TRUE), 6),
+  `N > 0.1%` = sum(error_pct > 0.1, na.rm = TRUE)
+), by = .(Method = method)]
+saveRDS(tbl_recon, paste0(obj_dir, "tbl_recon.rds"))
+```
+
+# Checklist of saved objects
+
+```{r checklist}
+saved_files <- list.files(obj_dir, full.names = FALSE)
+cat("=== Objects saved to", obj_dir, "===\n\n")
+for (f in sort(saved_files)) {
+  size_kb <- round(file.size(paste0(obj_dir, f)) / 1024, 1)
+  cat(sprintf("  [x] %-40s  (%s KB)\n", f, size_kb))
+}
+cat(sprintf("\nTotal: %d objects\n", length(saved_files)))
+```

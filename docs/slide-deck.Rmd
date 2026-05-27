@@ -1,0 +1,401 @@
+---
+title: "Estimating and Projecting the Probability of Dying Before Age 70 at the U.S. State Level, 1990–2050"
+subtitle: "Dissertation Aim 1"
+author: "William Garcia"
+institute: "University of Washington"
+date: "`r Sys.Date()`"
+output:
+  beamer_presentation:
+    includes:
+      in_header: beamer_preamble.tex
+    slide_level: 2
+    keep_tex: false
+    latex_engine: xelatex
+    citation_package: natbib
+bibliography: references.bib
+classoption: "aspectratio=169"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  out.width = "95%"
+)
+
+library(data.table)
+library(ggplot2)
+library(knitr)
+
+if (!requireNamespace("kableExtra", quietly = TRUE)) {
+  install.packages("kableExtra", repos = "https://cran.r-project.org")
+}
+library(kableExtra)
+
+wd <- normalizePath("C:/Users/wrgar/OneDrive - UW/04Dissertation/uw-phd-aim1/",
+                     winslash = "/")
+if (!grepl("/$", wd)) wd <- paste0(wd, "/")
+
+obj_dir <- paste0(wd, "output/slides/")
+
+tbl_ppd_summary    <- readRDS(paste0(obj_dir, "tbl_ppd_summary.rds"))
+tbl_progress_class <- readRDS(paste0(obj_dir, "tbl_progress_class.rds"))
+tbl_proj_summary   <- readRDS(paste0(obj_dir, "tbl_proj_summary.rds"))
+tbl_priority_freq  <- readRDS(paste0(obj_dir, "tbl_priority_freq.rds"))
+tbl_data_dims      <- readRDS(paste0(obj_dir, "tbl_data_dims.rds"))
+tbl_recon          <- readRDS(paste0(obj_dir, "tbl_recon.rds"))
+```
+
+# Motivation & Problem Statement
+
+## The U.S. premature mortality challenge
+
+- The probability of dying before age 70 (${}_{70}q_0$) captures the cumulative force of mortality across infancy, childhood, and working ages
+- Unlike crude death rates, ${}_{70}q_0$ is **independent of population age structure**
+- The U.S. has fallen behind peer nations despite high health spending
+
+\begin{exampleblock}{Core Question}
+Can the United States halve premature mortality by 2050?
+\end{exampleblock}
+
+## Why state-level analysis matters
+
+- U.S. states exhibit **substantial heterogeneity** in mortality levels and trends
+- Drivers differ: social determinants, health system capacity, behavioral risk factors, policy environments
+- National targets mask subnational disparities
+
+\begin{block}{Policy Relevance}
+State-level estimation is essential for monitoring progress, identifying geographic disparities, and informing targeted intervention strategies.
+\end{block}
+
+## The 50-by-50 framework
+
+- Inspired by the Lancet Commission on Global Health 2050 \citep{Jamison2024}
+- **Goal:** Halve each state's PPD by 2050 relative to a recent baseline
+- Evaluates whether observed rates of improvement are sufficient to reach the target
+- Classification: On track / Medium progress / Low or worsening
+
+\begin{uncertaintyblock}{Key Uncertainty}
+COVID-19 disrupted 2019–2023 trends. The pandemic's long-term impact on trajectories is unclear.
+\end{uncertaintyblock}
+
+# Aims & Research Questions
+
+## Dissertation Aim 1
+
+\begin{enumerate}
+\item \textbf{Estimate} ${}_{70}q_0$ for each U.S. state, by sex and year (1990–2023)
+\item \textbf{Characterize trends} via average annual rates of improvement (AARI) across multiple periods
+\item \textbf{Project} implied trajectories through 2050
+\item \textbf{Decompose} the PPD gap vs.\ reference populations into cause-specific contributions
+\item \textbf{Identify priority conditions} driving excess premature mortality in each state
+\end{enumerate}
+
+\begin{exampleblock}{Key Takeaway}
+A combined estimation, projection, and decomposition framework to assess feasibility of the 50-by-50 target at subnational scale.
+\end{exampleblock}
+
+# Contribution to the Literature
+
+## What is new
+
+- **Subnational application** of the Karlsson (2025) priority-conditions framework to U.S. states \citep{Karlsson2025}
+- **Dual decomposition** using both stepwise replacement \citep{Andreev2002Decompo} and Horiuchi continuous-change \citep{Shiro2008Horiuchi} methods
+- **50-by-50 feasibility assessment** at the state level with cause-specific attribution
+- Benchmarking against two complementary references: Western Europe (external) and best-performing U.S. states (internal)
+
+\begin{block}{Why It Matters}
+Identifies specific conditions and age groups where targeted interventions could close the gap---actionable intelligence for state health agencies and policymakers.
+\end{block}
+
+# Theoretical \& Conceptual Framework
+
+## Analytical framework
+
+\begin{center}
+\textit{[Figure: Conceptual diagram --- from GBD mortality data through life-table estimation, trend analysis, and decomposition to policy-relevant priority conditions]}
+\end{center}
+
+<!-- PLACEHOLDER: Insert conceptual framework diagram here -->
+
+**Workflow:**
+
+1. GBD 2023 mortality data $\rightarrow$ cause-mapped, age-structured rates
+2. Abridged life-table estimation $\rightarrow$ PPD per state/year/sex
+3. AARI computation $\rightarrow$ trend characterization and projection
+4. Decomposition $\rightarrow$ cause $\times$ age attribution of PPD gaps
+
+# Data Sources & Key Variables
+
+## Data overview
+
+```{r tbl-data-dims}
+kable(tbl_data_dims, format = "latex", booktabs = TRUE,
+      caption = "Analysis dimensions") %>%
+  kable_styling(latex_options = c("hold_position"), font_size = 9)
+```
+
+## Data sources
+
+- **Mortality data:** Global Burden of Disease 2023 (IHME)
+  - All-cause rates + death counts by state, age, sex, year
+  - Five cause-specific folders (infectious/childhood, NCD7/CVD-DM, injuries/disorders, NCD/infectious, NCD/tobacco)
+- **Cause mapping:** Karlsson (2025) priority conditions \citep{Karlsson2025}
+  - Maps GBD causes $\rightarrow$ priority condition groups
+  - Unmapped causes $\rightarrow$ residual ``Other'' category
+- **Reference populations:**
+  - Western Europe (GBD 2023 aggregate)
+  - Best-3 U.S. states (lowest PPD per year $\times$ sex)
+
+# Methods
+
+## Primary outcome: ${}_{70}q_0$
+
+The unconditional probability of dying before age 70, from an abridged period life table:
+
+$$\text{PPD}_{70} = 1 - \prod_{x=0}^{65} (1 - {}_{n}q_x)$$
+
+where the age-specific death probability is:
+
+$${}_{n}q_x = \frac{n \cdot m_x}{1 + (n - a_x) \cdot m_x}$$
+
+\begin{block}{Parameters}
+$n$ = age interval width; $a_x$ = mean person-years lived by decedents ($a_0 = 0.1$; $a_x = n/2$ otherwise). 16 age groups spanning 0--69.
+\end{block}
+
+## Trend quantification: AARI
+
+The Average Annual Rate of Improvement:
+
+$$\text{AARI} = \left(\frac{\text{PPD}_{\text{start}}}{\text{PPD}_{\text{end}}}\right)^{1/n} - 1$$
+
+- Positive $\Rightarrow$ improvement (declining mortality)
+- Computed for four periods: 1990--2019, 2000--2010, 2010--2019, 2019--2023
+- **Projection:** Extrapolate 2010--2019 AARI to 2050
+
+\begin{uncertaintyblock}{Assumption}
+Projection assumes continuation of pre-pandemic (2010–2019) improvement rates---no structural breaks.
+\end{uncertaintyblock}
+
+## Decomposition methods
+
+**Stepwise replacement** \citep{Andreev2002Decompo}: Sequentially replace each (age, cause) cell from state to reference rates; average forward and backward passes.
+
+**Horiuchi continuous-change** \citep{Shiro2008Horiuchi}: Integrate sensitivity of PPD along a continuous interpolation path ($N = 20$ steps).
+
+Both decompose the PPD gap into $K = 16 \times C$ cell contributions:
+$$\Delta\text{PPD} = \text{PPD}^{\text{state}} - \text{PPD}^{\text{ref}} = \sum_{i=1}^{K} c_i$$
+
+\begin{exampleblock}{Advantage}
+Two independent methods provide a robustness check; both sum exactly to the total gap.
+\end{exampleblock}
+
+# Results
+
+## PPD trends: 1990--2023
+
+```{r fig-ppd-trends}
+knitr::include_graphics(paste0(obj_dir, "fig_ppd_trends.png"))
+```
+
+## National summary with range
+
+```{r fig-ppd-national}
+knitr::include_graphics(paste0(obj_dir, "fig_ppd_national.png"))
+```
+
+## PPD summary statistics (selected years)
+
+```{r tbl-ppd-summary}
+kable(tbl_ppd_summary, format = "latex", booktabs = TRUE,
+      caption = "PPD (\\%) across states, selected years") %>%
+  kable_styling(latex_options = c("hold_position", "scale_down"), font_size = 8)
+```
+
+## Rates of improvement by period
+
+```{r fig-aari}
+knitr::include_graphics(paste0(obj_dir, "fig_aari_boxplot.png"))
+```
+
+## 50-by-50 progress: required vs. observed AARI
+
+```{r fig-50by50}
+knitr::include_graphics(paste0(obj_dir, "fig_50by50_scatter.png"))
+```
+
+## 50-by-50 classification
+
+```{r tbl-progress}
+kable(tbl_progress_class, format = "latex", booktabs = TRUE,
+      caption = "States by 50-by-50 performance group") %>%
+  kable_styling(latex_options = c("hold_position"), font_size = 9)
+```
+
+\begin{alertblock}{Finding}
+Most states are \textbf{not on track} to halve PPD by 2050 based on 2010--2019 trends, particularly for females.
+\end{alertblock}
+
+## Projection summary
+
+```{r tbl-proj}
+kable(tbl_proj_summary, format = "latex", booktabs = TRUE,
+      caption = "Projection parameters by sex") %>%
+  kable_styling(latex_options = c("hold_position", "scale_down"), font_size = 8)
+```
+
+## Implied PPD in 2050: Males
+
+```{r fig-implied-male, out.width="80%"}
+knitr::include_graphics(paste0(obj_dir, "fig_implied_2050_male.png"))
+```
+
+## Implied PPD in 2050: Females
+
+```{r fig-implied-female, out.width="80%"}
+knitr::include_graphics(paste0(obj_dir, "fig_implied_2050_female.png"))
+```
+
+## Cause-group contributions to the PPD gap
+
+```{r fig-cause-avg}
+knitr::include_graphics(paste0(obj_dir, "fig_decomp_cause_avg.png"))
+```
+
+## State-level decomposition heatmap (Males)
+
+```{r fig-heatmap, out.width="85%"}
+knitr::include_graphics(paste0(obj_dir, "fig_decomp_heatmap_male.png"))
+```
+
+## Age-group contributions to the PPD gap
+
+```{r fig-age-decomp}
+knitr::include_graphics(paste0(obj_dir, "fig_decomp_age.png"))
+```
+
+## Priority conditions: most frequent \#1 driver
+
+```{r tbl-priority}
+kable(tbl_priority_freq, format = "latex", booktabs = TRUE,
+      caption = "Most frequent top-ranked priority condition (Horiuchi vs.\\ Western Europe)") %>%
+  kable_styling(latex_options = c("hold_position"), font_size = 9)
+```
+
+\begin{exampleblock}{Key Takeaway}
+A small number of cause groups account for the majority of excess premature mortality across states.
+\end{exampleblock}
+
+# Robustness & Sensitivity
+
+## Decomposition reconciliation
+
+```{r tbl-recon}
+kable(tbl_recon, format = "latex", booktabs = TRUE,
+      caption = "Decomposition reconciliation: sum of contributions vs.\\ total PPD gap") %>%
+  kable_styling(latex_options = c("hold_position"), font_size = 9)
+```
+
+\begin{exampleblock}{Validation}
+Both methods sum to the total PPD gap within $< 0.1\%$ tolerance for all state--sex--reference combinations.
+\end{exampleblock}
+
+## Method comparison and sex consistency
+
+```{r fig-sex-scatter}
+knitr::include_graphics(paste0(obj_dir, "fig_sex_scatter.png"))
+```
+
+Males consistently have higher PPD than females across all 51 jurisdictions (2019).
+
+# Discussion & Interpretation
+
+## Key findings
+
+1. **Sustained decline 1990--2019** across most states, but pace varied widely
+2. **COVID-19 disruption:** 2019--2023 reversed gains in nearly all states
+3. **Males > Females** in PPD across all states and years
+4. **Geographic concentration:** Highest PPD in the Southeast and Appalachia; lowest in Northeast and West
+5. **Priority conditions:** A limited set of cause groups drives most of the gap vs. Western Europe
+
+\begin{block}{Interpretation}
+The 50-by-50 target is ambitious. Achieving it requires sustained acceleration of improvement rates beyond what was observed pre-pandemic, with cause-specific targeting.
+\end{block}
+
+## COVID-19 period impact (2019--2023)
+
+```{r fig-covid}
+knitr::include_graphics(paste0(obj_dir, "fig_covid_impact.png"))
+```
+
+# Limitations
+
+## Limitations of this analysis
+
+1. **Projection method:** AARI extrapolation assumes no structural changes---not a formal forecast model (e.g., Lee-Carter, Bayesian APC)
+2. **Single decomposition year:** Decomposition performed only for 2019; temporal changes in cause composition not yet assessed
+3. **No uncertainty quantification:** Point estimates only; no confidence intervals or posterior distributions
+4. **GBD model dependence:** All estimates inherit GBD 2023 modeling uncertainty, not propagated here
+5. **Cause mapping coverage:** Substantial mortality remains in the residual ``Other'' category
+
+\begin{uncertaintyblock}{Caveat}
+The 2010--2019 AARI may not represent future improvement potential, especially post-pandemic.
+\end{uncertaintyblock}
+
+# Summary & Conclusions
+
+## Summary
+
+- PPD at the U.S. state level declined from 1990 to 2019 but **the pace is insufficient** for most states to halve PPD by 2050
+- The 2019--2023 period shows **widespread reversals** due to COVID-19
+- **Cause-specific decomposition** identifies a small number of priority conditions driving the bulk of excess mortality relative to international and domestic benchmarks
+- Both decomposition methods agree closely, providing robust attribution
+
+\begin{exampleblock}{Bottom Line}
+Halving premature mortality by 2050 is feasible for some states but requires targeted, accelerated action on priority conditions---especially in high-burden states.
+\end{exampleblock}
+
+# Next Steps & Recommendations
+
+## Planned extensions
+
+1. **Formal forecasting models:** Lee-Carter, Bayesian hierarchical projections with uncertainty intervals
+2. **Temporal decomposition:** Extend cause-specific analysis across multiple years to track shifting drivers
+3. **Scenario-based projections:** Optimistic/pessimistic scenarios with and without interventions
+4. **Subgroup analysis:** Replicate Norheim et al.\ (2024) framework for demographic subgroups \citep{Norheim2024}
+5. **County-level extension:** Leverage county-level mortality data for finer geographic resolution
+
+\begin{block}{Policy Implication}
+Priority-condition rankings can guide resource allocation across states and condition groups to maximize PPD reduction per dollar invested.
+\end{block}
+
+# Appendix
+
+## Appendix: Abridged life-table age structure
+
+16 age groups below 70:
+
+| Age Group | Width ($n$) | $a_x$ |
+|:---------:|:-----------:|:------:|
+| Under 1   | 1           | 0.1    |
+| 1         | 1           | 0.5    |
+| 2--4      | 3           | 1.5    |
+| 5--9 to 65--69 | 5     | 2.5    |
+
+$${}_{n}q_x = \frac{n \cdot m_x}{1 + (n - a_x) \cdot m_x}, \quad \text{PPD}_{70} = 1 - \prod (1 - {}_{n}q_x)$$
+
+## Appendix: Decomposition equations
+
+**Stepwise** (symmetrized forward + backward):
+$$c_i = \frac{1}{2}\left[c_i^{\text{fwd}} + c_i^{\text{bwd}}\right], \quad \sum_i c_i = \Delta\text{PPD}$$
+
+**Horiuchi** (continuous-change, $N = 20$):
+$$c_i \approx \sum_{j=1}^{N} \left[\text{PPD}\!\left(\mathbf{r}^{(j)} + \tfrac{\epsilon_i}{2}\mathbf{e}_i\right) - \text{PPD}\!\left(\mathbf{r}^{(j)} - \tfrac{\epsilon_i}{2}\mathbf{e}_i\right)\right]$$
+
+Rate vector ordering: cause-within-age $[m_{0,1}, \ldots, m_{0,C}, m_{1,1}, \ldots, m_{65,C}]$.
+
+## Appendix: References
+
+\footnotesize
